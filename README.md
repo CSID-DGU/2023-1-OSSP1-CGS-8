@@ -3,4 +3,4 @@
 
 
 # NOTION 링크
-https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08/blob/main/README.md
+https://www.notion.so/a586489184e347909d294d7d8987e2a8?pvs=4
