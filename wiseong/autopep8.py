@@ -1464,6 +1464,7 @@ class NamingConvention:
         
         self.fix_705 = self.fix_701  
         self.fix_707 = self.fix_702
+        
 
     def fix_701(self, result):
         """fix class name"""
@@ -1473,16 +1474,46 @@ class NamingConvention:
         """fix function name"""
         return None
     
-    def snake_to_capwords(snake_case):
+    def is_snake_case(word):
+        if not word:
+            return False
+
+        if not word[0].islower():
+            return False
+
+        if not all(char.islower() or char == '_' for char in word):
+            return False
+
+        if '__' in word:
+            return False
+
+        if word in keyword.kwlist:
+            return False
+        
+        return True
+    
+    def to_capitalized_words(self, word):
+        """return capitalized words
+        
+        class naming convention
+        """
+        if self.is_snake_case(word): return string.capwords(word, sep='_').replace('_', '') 
+        return word[0].upper() + word[1:]
+
+    def snake_to_capwords(self, snake_case):
         """return capwords"""
+        if self.is_snake_case(snake_case): return snake_case
         capitalized_words = string.capwords(snake_case, sep='_').replace('_', '')
         return capitalized_words
         
     def camel_to_snake(camel_case):
-        """return snake case"""
+        """return snake case
+        
+        method naming convention
+        """
         snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
         return snake_case
-        
+
 
 def get_module_imports_on_top_of_file(source, import_line_index):
     """return import or from keyword position
