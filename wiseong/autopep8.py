@@ -1462,17 +1462,39 @@ class NamingConvention:
             set() if long_line_ignore_cache is None
             else long_line_ignore_cache)
         
-        self.fix_705 = self.fix_701  
-        self.fix_707 = self.fix_702
+        self.fix_701 = self.fix_705  
+        self.fix_702 = self.fix_707
         
 
-    def fix_701(self, result):
+    def fix_w705(self, result):
         """fix class name"""
-        return None
+        line_index = result['line'] - 1
+        target = self.source[line_index]
+        offset = result['column'] - 1
+        
+        colon_index = target.index(":")
+        class_name = target[offset:colon_index]
+        
+        fix_class_name = self.to_capitalized_words(class_name)
+        
+        # 1. 이중 for문은 아니지만 for문 두 번 돌아야 함 -> 더 효율적인 방법?
+        # 2. 단일 파일에서 실행된다고 가정
+        if self.is_vaild_class_name(fix_class_name):
+            for i, s in enumerate(self.source):
+                self.source[i] = s.replace(class_name, fix_class_name)
+        
+        return None #return 필요 없음, 아래 메소드와 구분 지으려고 잠시 두는 용도
     
-    def fix_702(self, result):
+    def fix_707(self, result):
         """fix function name"""
         return None
+    
+    def is_vaild_class_name(self, class_name):
+        if keyword.iskeyword(class_name): return False
+        for s in self.source:
+            if class_name in s:
+                return False
+        return True
     
     def is_snake_case(word):
         if not word:
