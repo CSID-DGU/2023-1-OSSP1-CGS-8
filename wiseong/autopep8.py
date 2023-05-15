@@ -1529,7 +1529,7 @@ class NamingConvention:
         
         method naming convention
         """
-        if not is_camel_case(self.camel_case): return camel_case.lower()
+        if not self.is_camel_case(camel_case): return camel_case.lower()
         snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
         return snake_case
 
