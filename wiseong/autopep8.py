@@ -1492,6 +1492,24 @@ class NamingConvention:
         
         return True
     
+    def is_camel_case(word):
+        if not word:
+            return False
+
+        if ' ' in word:
+            return False
+
+        if '_' in word:
+            return False
+
+        if word[0].isupper():
+            return False
+
+        if any(w[0].isupper() for w in word.split()):
+            return False
+
+        return True
+    
     def to_capitalized_words(self, word):
         """return capitalized words
         
@@ -1506,11 +1524,12 @@ class NamingConvention:
         capitalized_words = string.capwords(snake_case, sep='_').replace('_', '')
         return capitalized_words
         
-    def camel_to_snake(camel_case):
+    def camel_to_snake(self, camel_case):
         """return snake case
         
         method naming convention
         """
+        if not is_camel_case(self.camel_case): return camel_case.lower()
         snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
         return snake_case
 
