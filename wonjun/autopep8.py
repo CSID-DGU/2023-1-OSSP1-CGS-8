@@ -1987,7 +1987,7 @@ def _is_binary_operator(token_type, text):
 Token = collections.namedtuple('Token', ['token_type', 'token_string',
                                          'spos', 'epos', 'line'])
 
-
+    
 class ReformattedLines(object):
 
     """The reflowed lines of atoms.
@@ -1995,6 +1995,18 @@ class ReformattedLines(object):
     Each part of the line is represented as an "atom." They can be moved
     around when need be to get the optimal formatting.
 
+    이 코드는 Python에서 코드를 파싱하고, 이를 변환하여 새로운 코드를 생성하는 기능을 수행하는 클래스와 함수를 정의한다.
+    _Indent 클래스는 들여쓰기를 나타내며, emit() 메서드를 사용하여 들여쓰기를 반환합니다. size() 메서드를 사용하여 들여쓰기 크기를 반환합니다.
+    _Space 클래스는 공백을 나타내며, emit() 메서드를 사용하여 공백을 반환합니다. size() 메서드를 사용하여 공백 크기 1을 반환합니다.
+    _LineBreak 클래스는 줄 바꿈을 나타내며, emit() 메서드를 사용하여 줄 바꿈 문자를 반환합니다. size() 메서드를 사용하여 줄 바꿈 크기를 반환합니다.
+    
+    __init__ 함수는 max_line_length 매개 변수를 허용하고, 이 매개 변수는 생성 된 코드의 최대 행 길이를 정의합니다. 이 함수는 객체를 초기화하고 emit() 메서드를 사용하여 생성 된 코드를 반환합니다.
+    __repr__ 함수는 객체를 나타내는 문자열을 반환합니다. 이 함수는 emit() 메서드를 사용하여 생성 된 코드를 반환합니다.
+
+    각 클래스는 emit() 메서드를 사용하여 코드를 생성하고, size() 메서드를 사용하여 클래스에서 생성 된 코드 요소의 크기를 정의합니다. 
+    __init__() 함수는 객체를 초기화하고 emit() 메서드를 사용하여 생성 된 코드를 반환합니다. __repr__() 함수는 객체를 나타내는 문자열을 반환합니다.
+
+    이 코드는 들여쓰기, 공백, 줄 바꿈 등의 코드 요소를 정의하여 파싱된 코드를 적절한 형식으로 변환하여 반환하는 데 사용될 수 있습니다.
     """
 
     ###########################################################################
@@ -2048,7 +2060,16 @@ class ReformattedLines(object):
 
     ###########################################################################
     # Public Methods
+    """add(self, obj, indent_amt, break_after_open_bracket)
+    add 메서드는 객체와 들여쓰기(indent_amt) 값, 그리고 open bracket 이후에 줄바꿈 여부(break_after_open_bracket)를 매개변수로 받습니다. 
+    만약 추가하려는 객체가 Atom이면 _add_item 메서드를 호출하여 현재 줄에 추가하고, Container이면 _add_container 메서드를 호출하여 줄을 쪼개서 추가합니다.
 
+    add_comment 메서드는 item을 매개변수로 받아, item 앞에 주석을 추가합니다. 
+    추가하기 전에, 빈 칸(Space) 객체가 있는지 확인하여 없으면 num_spaces에 2를 할당하고, 있다면 1을 할당합니다. 
+    그 다음, 라인이 2개 이상인 경우, 라인의 마지막 요소(-1번 인덱스)가 Space 객체인지 확인하고, 맞으면 num_spaces에서 1을 빼줍니다. 
+    마찬가지로 라인이 3개 이상인 경우, 라인의 마지막에서 두 번째 요소(-2번 인덱스)도 Space 객체인지 확인하고, 맞으면 num_spaces에서 1을 빼줍니다. 
+    마지막으로, num_spaces가 0보다 크면, num_spaces만큼 Space 객체를 추가하고, item도 추가합니다.
+    """
     def add(self, obj, indent_amt, break_after_open_bracket):
         if isinstance(obj, Atom):
             self._add_item(obj, indent_amt)
@@ -2070,6 +2091,11 @@ class ReformattedLines(object):
             num_spaces -= 1
         self._lines.append(item)
 
+    """add_indent(self, indent_amt): 들여쓰기를 추가합니다. _Indent 클래스의 인스턴스를 만들어서 self._lines 리스트에 추가합니다.
+    add_line_break(self, indent): 줄 바꿈을 추가합니다. _LineBreak 클래스의 인스턴스를 만들어서 self._lines 리스트에 추가하고, add_indent 메서드를 호출하여 새로운 들여쓰기를 추가합니다.
+    add_line_break_at(self, index, indent_amt): 특정 인덱스에 줄 바꿈을 추가합니다. 
+    _LineBreak 클래스의 인스턴스를 만들어서 self._lines 리스트에 삽입하고, 인덱스 다음에 새로운 들여쓰기를 추가하기 위해 _Indent 클래스의 인스턴스를 만들어서 삽입합니다.
+    """
     def add_indent(self, indent_amt):
         self._lines.append(self._Indent(indent_amt))
 
@@ -2081,6 +2107,17 @@ class ReformattedLines(object):
         self._lines.insert(index, self._LineBreak())
         self._lines.insert(index + 1, self._Indent(indent_amt))
 
+    """add_space_if_needed(self, curr_text, equal=False)
+    이 함수는 현재 텍스트와 equal 매개 변수가 주어지면, 현재 라인에 공백을 추가해야 하는지 여부를 결정합니다. 이 함수는 다음과 같은 단계로 실행됩니다.
+    이전 항목과 그 이전 항목에서 문자열 표현을 가져옵니다.
+    이전 항목이 키워드, 식별자, 숫자 또는 문자열이고 현재 항목이 공백, 구분 기호, 마침표, 쉼표 또는 콜론이 아닌 연산자인 경우에는 현재 라인에 공백을 추가합니다.
+    이전 항목이 '.'이 아니고 현재 항목이 'import'가 아닌 경우에는 '.' 주위에 공백을 추가하지 않습니다.
+    이전 항목이 '}' 또는 ']'로 끝나고 현재 항목이 구분 기호 또는 '}' 또는 ']'로 시작하지 않는 경우 괄호 주위에 공백을 추가하지 않습니다.
+    이전 항목이 콜론이나 쉼표로 끝나는 경우 이전 항목과 현재 항목 사이에 공백을 추가합니다.
+    equal 매개 변수가 True이고 이전 항목이 '='인 경우 '=' 주위에 공백을 추가합니다.
+    이전 항목과 그 이전 항목이 존재하고, 이전 항목이 숫자, 문자열 또는 식별자가 아닌 경우, 이전 항목이 '+' 또는 '-'가 아닌 경우, 이전 항목이 '*' 또는 '/'와 같은 이항 연산자인 경우 현재 항목과 이전 항목 사이에 공백을 추가합니다.
+    이 함수는 _Space 객체를 _lines 리스트에 추가하여 현재 라인에 공백을 추가합니다. 이 함수는 반환 값을 갖지 않습니다.
+    """
     def add_space_if_needed(self, curr_text, equal=False):
         if (
             not self._lines or isinstance(
@@ -2127,6 +2164,12 @@ class ReformattedLines(object):
         ):
             self._lines.append(self._Space())
 
+    """previous_item()
+    이전의 공백이 아닌 항목을 반환합니다. 이전 항목은 _prev_item 변수에 저장되어 있습니다.
+
+    fits_on_current_line(item_extent) 함수는 item_extent 매개변수와 현재 줄의 크기를 비교하여, item_extent 값이 현재 줄에 추가할 수 있는지 여부를 반환합니다. 
+    current_size() 메서드를 사용하여 현재 줄의 크기를 가져옵니다. 만약 current_size() + item_extent가 _max_line_length보다 작거나 같으면 True를 반환하고, 그렇지 않으면 False를 반환합니다.
+    """
     def previous_item(self):
         """Return the previous non-whitespace item."""
         return self._prev_item
@@ -2134,6 +2177,12 @@ class ReformattedLines(object):
     def fits_on_current_line(self, item_extent):
         return self.current_size() + item_extent <= self._max_line_length
 
+    """current_size()
+    이 코드는 현재 줄의 크기(들여쓰기를 제외한)를 반환하는 current_size() 메서드입니다.
+    메서드는 _lines 리스트의 끝에서부터 역순으로 반복하면서, 각 요소의 크기를 합산합니다.
+    isinstance() 함수를 사용하여 요소가 _LineBreak 클래스의 인스턴스인지 확인합니다. 만약 그렇다면, 현재 줄의 크기 계산을 완료하고 size 값을 반환합니다.
+    이 코드는 _lines 리스트에서 현재 줄의 크기(들여쓰기를 제외한)를 계산하는 데 사용됩니다.
+    """
     def current_size(self):
         """The size of the current line minus the indentation."""
         size = 0
@@ -2143,12 +2192,26 @@ class ReformattedLines(object):
                 break
 
         return size
-
+    
+    """line_empty()
+    이 함수는 _lines 리스트의 마지막 요소가 _LineBreak 클래스의 인스턴스이거나 _Indent 클래스의 인스턴스인 경우 True를 반환합니다.
+    메서드는 먼저 _lines 리스트가 비어있는지 확인하고, 만약 리스트가 비어있다면 False를 반환합니다.
+    그렇지 않은 경우, isinstance() 함수를 사용하여 _lines 리스트의 마지막 요소가 _LineBreak 클래스의 인스턴스이거나 _Indent 클래스의 인스턴스인지 확인합니다. 만약 그렇다면, 해당 함수는 True를 반환합니다.
+    이 코드는 코드 요소를 추가하기 전에 _lines 리스트의 마지막 요소가 새로운 코드 요소를 추가하기 위한 빈 줄을 필요로 하는지 여부를 확인하는 데 사용됩니다.
+    """
     def line_empty(self):
         return (self._lines and
                 isinstance(self._lines[-1],
                            (self._LineBreak, self._Indent)))
 
+    """emit() 
+    이 함수는 _lines 리스트에 저장된 코드 요소를 반복하면서, 각 요소를 문자열로 변환하고, 이를 합쳐서 최종 문자열을 생성합니다.
+    string 변수는 최종 생성된 문자열을 저장합니다. for 루프는 _lines 리스트를 반복하면서 각 요소를 문자열로 변환합니다.
+    isinstance() 함수는 현재 요소가 _LineBreak 클래스의 인스턴스인지 확인합니다. 만약 해당 요소가 _LineBreak 클래스의 인스턴스라면, string 변수에서 오른쪽 끝에 있는 모든 공백을 제거합니다.
+    그 다음, item.emit() 메서드를 사용하여 각 요소를 문자열로 변환하고, 이를 string 변수에 추가합니다.
+    최종적으로 string.rstrip() + '\n'를 사용하여 마지막 공백을 제거하고, 마지막에 새 줄을 추가하여 최종 생성된 코드 문자열을 반환합니다.
+    이 코드는 파싱된 코드 요소를 적절한 문자열로 변환하여 반환하는 데 사용됩니다.
+    """
     def emit(self):
         string = ''
         for item in self._lines:
@@ -2160,7 +2223,17 @@ class ReformattedLines(object):
 
     ###########################################################################
     # Private Methods
-
+    """_add_item(self, item, indent_amt)
+    이 함수는 _add_item이라는 이름으로, Python 코드에서 문장을 재구성하는 데 사용됩니다. 이 함수는 주어진 항목(item)을 현재 행에 추가하고, 적절한 형식으로 재구성한 다음, 결과 문장을 반환합니다.
+    이 함수는 item과 indent_amt라는 두 개의 매개변수를 취합니다. item 매개변수는 재구성할 텍스트 문자열 또는 다른 Python 객체입니다. indent_amt 매개변수는 추가 들여쓰기 수준을 결정하는 데 사용됩니다.
+    _add_item 함수는 먼저 입력 매개변수인 item을 문자열로 변환한 다음, 현재 행에 추가합니다. 이 함수는 이전에 추가된 아이템과 현재 아이템이 문자열인 경우, 두 개의 문자열 리터럴이 연속으로 나오지 않도록, 이전 아이템과 현재 아이템 사이에 빈 줄을 삽입합니다.
+    함수의 두 번째 부분에서는 item이 컨테이너에 추가되는 경우와 컨테이너가 아닌 경우를 구분하여 처리합니다. 
+    컨테이너에 추가하는 경우, _prevent_default_initializer_splitting 함수와 _split_after_delimiter 함수를 사용하여 현재 행에 적절한 추가를 수행합니다. 
+    컨테이너가 아닌 경우에는 새로운 줄에 추가할 수 있도록 줄 바꿈을 수행하고, 들여쓰기를 적용합니다.
+    이 함수는 마지막으로 item의 텍스트 값을 기반으로 현재 브래킷 깊이를 갱신합니다. 
+    item의 값이 '(', '[', '{' 중 하나인 경우, 브래킷 깊이를 1 증가시키고, ')', ']', '}' 중 하나인 경우, 브래킷 깊이를 1 감소시킵니다. 
+    반환값은 없으며, 결과 문장은 _lines 속성을 통해 접근할 수 있습니다.
+    """
     def _add_item(self, item, indent_amt):
         """Add an item to the line.
 
@@ -2202,6 +2275,18 @@ class ReformattedLines(object):
             self._bracket_depth -= 1
             assert self._bracket_depth >= 0
 
+    """_add_container(self, container, indent_amt, break_after_open_bracket)
+    이 함수는 컨테이너 객체(리스트, 튜플, 딕셔너리 등)를 추가하는 데 사용됩니다. 
+    매개변수 container는 추가하려는 컨테이너 객체를 나타내고, indent_amt는 들여쓰기 수준을 결정하는 데 사용됩니다. 
+    break_after_open_bracket은 컨테이너 객체가 여러 줄에 걸쳐 있을 때, 여는 괄호 뒤에 개행을 할지 여부를 결정합니다.
+    
+    함수는 다음과 같은 작업을 수행합니다.
+    container가 객체인지 확인합니다. 만약 Atom 객체이면 _add_item() 메서드를 사용하여 추가하고 함수를 종료합니다.
+    container 객체가 한 줄에 들어가지 않을 정도로 길다면, 이전 항목이 =가 아니고, 현재 줄이 비어 있지 않은 경우, 그리고 컨테이너 객체가 현재 줄에 들어가지 않을만큼 크다면 컨테이너 객체를 다음 줄에 추가합니다. 
+    이 때 여는 괄호 뒤에 개행을 할 지 여부를 break_after_open_bracket 매개변수에 따라 결정합니다. 만약 container가 한 줄에 들어가면, 현재 줄에 추가합니다.
+    컨테이너 객체가 ListComprehension 또는 IfExpression 클래스의 인스턴스인 경우, 들여쓰기 수준을 indent_amt로 설정합니다.
+    container.reflow() 메서드를 호출하여 컨테이너 객체를 추가하고, 들여쓰기와 break_after_open_bracket를 전달합니다.
+    """
     def _add_container(self, container, indent_amt, break_after_open_bracket):
         actual_indent = indent_amt + 1
 
@@ -2237,7 +2322,10 @@ class ReformattedLines(object):
         # container.
         container.reflow(self, ' ' * actual_indent,
                          break_after_open_bracket=break_after_open_bracket)
-
+        
+    """_prevent_default_initializer_splitting(self, item, indent_amt)
+    
+    """
     def _prevent_default_initializer_splitting(self, item, indent_amt):
         """Prevent splitting between a default initializer.
 
