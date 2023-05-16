@@ -1462,8 +1462,19 @@ class NamingConvention:
             set() if long_line_ignore_cache is None
             else long_line_ignore_cache)
         
-        self.fix_701 = self.fix_705  
-        self.fix_702 = self.fix_707
+        # option이 aggressive 3레벨 일 경우 또는 experimental에만 실행
+        # self.fix_w701 = (
+        #     self.fix_w705 if
+        #     options and (options.aggressive >= 3 or options.experimental) else
+        #     pass)
+        
+        # self.fix_w702 = (
+        #     self.fix_w707 if
+        #     options and (options.aggressive >= 3 or options.experimental) else
+        #     pass)
+        
+        self.fix_w701 = self.fix_w705 
+        self.fix_w702 = self.fix_w707
         
 
     def fix_w705(self, result):
@@ -1471,9 +1482,14 @@ class NamingConvention:
         line_index = result['line'] - 1
         target = self.source[line_index]
         offset = result['column'] - 1
-        
         end_index = target.index(":")
+        
         class_name = target[offset:end_index]
+        
+        # 상속받는 자식 클래스인 경우
+        if '(' in class_name:
+            class_name = class_name[0 : class_name.index("(")]
+        
         class_name = class_name.strip()
         
         fix_class_name = self.to_capitalized_words(class_name)
@@ -1498,8 +1514,7 @@ class NamingConvention:
         
         # def Exam1 (): 일 경우.
         # 공백 수정 후 호출되는 것이면 굳이 필요없다.
-        # 하지만 customize해서 공백을 제거안했다면 필요하다
-        #   -> 이때는 필요한 코드
+        # - customize해서 공백을 제거 안했다면 필요한 코드
         function_name = function_name.strip()
         
         fix_function_name = self.camel_to_snake(function_name)
@@ -1511,7 +1526,11 @@ class NamingConvention:
         return None #return 필요 없음, 아래 메소드와 구분 지으려고 잠시 두는 용도
     
     def is_vaild_name(self, name):
+        """이름 변경 가능 여부 판별"""
+        
+        # 변경하려는 이름이 키워드인 경우
         if keyword.iskeyword(name): return False
+        # 변경하려는 이름이 파일내에 존재
         for s in self.source:
             if name in s:
                 return False
