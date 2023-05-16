@@ -1750,7 +1750,7 @@ def class_name_convention(logical_line, tokens):
             prev_end = end
             
 # 추가한 부분 - 김태욱
-def is_smallwords(word):
+def is_snakecase(word):
     
     # 문자열이 비어 있는 경우
     if not word:
@@ -1775,13 +1775,13 @@ def is_smallwords(word):
     return True
     
 @register_check
-def function_name_convention(logical_line, tokens):    
+def func_name_convention(logical_line, tokens):    
     prev_end = (0, 0)
     for token_type, text, start, end, line in tokens:
-        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text) and "class" in line:
-            not_recommand_class_name = line[:start[1]].strip()
-            if not_recommand_class_name:
-                yield (start, "W701 class name is recommended CapitalizedWords")
+        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_snakecase(text) and "def" in line:
+            not_recommand_func_name = line[:start[1]].strip()
+            if not_recommand_func_name:
+                yield (start, "W702 function name is recommended snake_case")
         elif token_type != tokenize.NL:
             prev_end = end
 
