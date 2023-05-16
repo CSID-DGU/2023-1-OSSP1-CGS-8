@@ -1728,22 +1728,54 @@ def is_capwords(word):
     if '_' in word:
         return False
 
-    # 첫 번째 문자가 소문자인 경우
-    if word[0].islower():
+    # 첫 번째 문자가 대문자가 아닌 경우
+    if not word[0].isupper():
         return False
     
-     # 숫자로 시작하는 경우
-    if word[0].isdigit():
-        return False
-    
-    # 첫 번째 문자를 제외하고 대문자로 시작하는 단어가 있는 경우
-    if len(word) > 1 and word[1:].isupper():
+    # 대문자로 시작하는 단어가 있는 경우
+    if any(w[0].isupper() for w in word.split()):
         return False
 
     return True
 
 @register_check
 def class_name_convention(logical_line, tokens):    
+    prev_end = (0, 0)
+    for token_type, text, start, end, line in tokens:
+        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text) and "class" in line:
+            not_recommand_class_name = line[:start[1]].strip()
+            if not_recommand_class_name:
+                yield (start, "W701 class name is recommended CapitalizedWords")
+        elif token_type != tokenize.NL:
+            prev_end = end
+            
+# 추가한 부분 - 김태욱
+def is_smallwords(word):
+    
+    # 문자열이 비어 있는 경우
+    if not word:
+        return False
+
+    # 공백이 포함된 경우
+    if ' ' in word:
+        return False
+    
+    # 첫 번째 문자가 소문자가 아닌 경우
+    if not word[0].islower():
+        return False
+    
+    # 모든 문자가 소문자이거나 '_'가 아닌 경우
+    if not all(char.islower() or char == '_' for char in word):
+        return False
+    
+    # 함수가 던더메서드인 경우
+    if '__' in word:
+        return False
+    
+    return True
+    
+@register_check
+def function_name_convention(logical_line, tokens):    
     prev_end = (0, 0)
     for token_type, text, start, end, line in tokens:
         if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text) and "class" in line:
