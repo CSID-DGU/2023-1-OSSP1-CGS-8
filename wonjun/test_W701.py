@@ -1,66 +1,40 @@
-import string
-import re
-import keyword
+# CamelCase -> CamelCase
+class CamelCase:
+    def a():
+        return None
+    
+# camelCase -> CamelCase
+class camelCase:    
+    def a():
+        return None
+    
+# camelcase -> Camelcase
+class camelcase:
+    def a():
+        return None
 
-def is_snake_case(word):
-    if not word:
-        return False
-    
-    if not word[0].islower():
-        return False
-    
-    if not all(char.islower() or char == '_' for char in word):
-        return False
-    
-    if '__' in word:
-        return False
-    
-    if word in keyword.kwlist:
-        return False
-    
-    return True
-    
-def is_camel_case(word):
-    if not word:
-        return False
-    if ' ' in word:
-        return False
-    if '_' in word:
-        return False
-    if word[0].isupper():
-        return False
-    if any(w[0].isupper() for w in word.split()):
-        return False
-    return True
+# camel_case -> CamelCase    
+class camel_case:
+    def a():
+        return None
 
-def to_capitalized_words(word):
-    """return capitalized words
+# Camelcase -> Camelcase
+class Camelcase:
+    def a():
+        return None
     
-    class naming convention
-    """
-    if is_snake_case(word): return string.capwords(word, sep='_').replace('_', '') 
-    return word[0].upper() + word[1:]
+# Camel_Case -> CamelCase
+class Camel_Case:
+    def a():
+        return None
 
-def snake_to_capwords(snake_case):
-    """return capwords"""
-    if is_snake_case(snake_case): return snake_case
-    capitalized_words = string.capwords(snake_case, sep='_').replace('_', '')
-    return capitalized_words
-    
-def camel_to_snake(camel_case):
-    """return snake case
-    
-    method naming convention
-    """
-    if not is_camel_case(camel_case): return camel_case.lower()
-    snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
-    return snake_case
+# CAMELcase -> Camelcase
+class CAMELcase:
+    def a():
+        return None
 
-# CamelCase
-# Camel case
-# Camel_Case
-# Camel_case
-# camelCase
-# camel_case
-# camelcase
-# 
+# CamelCAsE -> CamelCase
+class CamelCAsE:
+    def a():
+        return None
+    
