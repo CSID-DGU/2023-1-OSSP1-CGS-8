@@ -1466,33 +1466,54 @@ class NamingConvention:
         self.fix_702 = self.fix_707
         
 
-    def fix_w705(self, result):
+        def fix_w705(self, result):
         """fix class name"""
         line_index = result['line'] - 1
         target = self.source[line_index]
         offset = result['column'] - 1
         
-        colon_index = target.index(":")
-        class_name = target[offset:colon_index]
+        end_index = target.index(":")
+        class_name = target[offset:end_index]
+        class_name = class_name.strip()
         
         fix_class_name = self.to_capitalized_words(class_name)
         
         # 1. 이중 for문은 아니지만 for문 두 번 돌아야 함 -> 더 효율적인 방법?
         # 2. 단일 파일에서 실행된다고 가정
-        if self.is_vaild_class_name(fix_class_name):
+        if self.is_vaild_name(fix_class_name):
             for i, s in enumerate(self.source):
                 self.source[i] = s.replace(class_name, fix_class_name)
         
         return None #return 필요 없음, 아래 메소드와 구분 지으려고 잠시 두는 용도
+
     
-    def fix_707(self, result):
+    def fix_w707(self, result):
         """fix function name"""
-        return None
+        line_index = result['line'] - 1
+        target = self.source[line_index]
+        offset = result['column'] - 1
+        
+        end_index = target.index(":")
+        function_name = target[offset:end_index]
+        
+        # def Exam1 (): 일 경우.
+        # 공백 수정 후 호출되는 것이면 굳이 필요없다.
+        # 하지만 customize해서 공백을 제거안했다면 필요하다
+        #   -> 이때는 필요한 코드
+        function_name = function_name.strip()
+        
+        fix_function_name = self.camel_to_snake(function_name)
+        
+        if self.is_vaild_name(fix_function_name):
+            for i, s in enumerate(self.source):
+                self.source[i] = s.replace(function_name, fix_function_name)
+        
+        return None #return 필요 없음, 아래 메소드와 구분 지으려고 잠시 두는 용도
     
-    def is_vaild_class_name(self, class_name):
-        if keyword.iskeyword(class_name): return False
+    def is_vaild_name(self, name):
+        if keyword.iskeyword(name): return False
         for s in self.source:
-            if class_name in s:
+            if name in s:
                 return False
         return True
     
