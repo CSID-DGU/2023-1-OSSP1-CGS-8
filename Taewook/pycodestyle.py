@@ -1731,10 +1731,14 @@ def is_capwords(word):
     # 첫 번째 문자가 소문자인 경우
     if word[0].islower():
         return False
-
-    # # 대문자로 시작하는 단어가 있는 경우
-    # if any(w[0].isupper() for w in word.split()):
-    #     return False
+    
+     # 숫자로 시작하는 경우
+    if word[0].isdigit():
+        return False
+    
+    # 첫 번째 문자를 제외하고 대문자로 시작하는 단어가 있는 경우
+    if len(word) > 1 and word[1:].isupper():
+        return False
 
     return True
 
