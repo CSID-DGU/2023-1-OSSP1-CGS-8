@@ -1435,6 +1435,9 @@ class FixPEP8(object):
             target[:offset + 1], target[offset + 1:])
 
 # 추가한 부분 - 김위성
+# 해결해야 할 부분
+# - FixPEP8과 상속 문제
+# - fix(), _fix_source()
 class NamingConvention:
     
     def __init__(self, filename,
@@ -1463,18 +1466,14 @@ class NamingConvention:
             else long_line_ignore_cache)
         
         # option이 aggressive 3레벨 일 경우 또는 experimental에만 실행
-        # self.fix_w701 = (
-        #     self.fix_w705 if
-        #     options and (options.aggressive >= 3 or options.experimental) else
-        #     pass)
+        if options and (options.aggressive >= 3 or options.experimental):
+            self.fix_w701 = self.fix_w705
         
-        # self.fix_w702 = (
-        #     self.fix_w707 if
-        #     options and (options.aggressive >= 3 or options.experimental) else
-        #     pass)
+        if options and (options.aggressive >= 3 or options.experimental):
+            self.fix_w702 = self.fix_w707
         
-        self.fix_w701 = self.fix_w705 
-        self.fix_w702 = self.fix_w707
+        # self.fix_w701 = self.fix_w705 
+        # self.fix_w702 = self.fix_w707
 
     def fix_w705(self, result):
         """fix class name"""
@@ -4421,7 +4420,8 @@ def parse_args(arguments, apply_config=False):
         if args.aggressive:
             # Enable everything by default if aggressive.
             # aggressive인 경우 아래의 친구들도 select해줌
-            args.select = {'E', 'W1', 'W2', 'W3', 'W6'}
+            # 추가한 부분 - 김위성
+            args.select = {'E', 'W1', 'W2', 'W3', 'W6', 'W7'}
         else:
             args.ignore = _split_comma_separated(DEFAULT_IGNORE)
 
