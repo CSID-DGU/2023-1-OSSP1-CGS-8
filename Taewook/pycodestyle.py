@@ -1713,7 +1713,7 @@ def python_3000_async_await_keywords(logical_line, tokens):
             "Python 3.7",
         )
 
-# 추가한 부분 - 김태욱
+# 추가한 부분 - 김태욱/ class name
 def is_capwords(word):
     
     # 문자열이 비어 있는 경우
@@ -1749,7 +1749,7 @@ def class_name_convention(logical_line, tokens):
         elif token_type != tokenize.NL:
             prev_end = end
             
-# 추가한 부분 - 김태욱
+# 추가한 부분 - 김태욱 / function name
 def is_snakecase(word):
     
     # 문자열이 비어 있는 경우
