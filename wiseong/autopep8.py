@@ -1434,7 +1434,7 @@ class FixPEP8(object):
         self.source[line_index] = '{}\\{}'.format(
             target[:offset + 1], target[offset + 1:])
 
-
+# 추가한 부분 - 김위성
 class NamingConvention:
     
     def __init__(self, filename,
@@ -1475,7 +1475,6 @@ class NamingConvention:
         
         self.fix_w701 = self.fix_w705 
         self.fix_w702 = self.fix_w707
-        
 
     def fix_w705(self, result):
         """fix class name"""
@@ -1502,7 +1501,6 @@ class NamingConvention:
         
         return None #return 필요 없음, 아래 메소드와 구분 지으려고 잠시 두는 용도
 
-    
     def fix_w707(self, result):
         """fix function name"""
         line_index = result['line'] - 1
