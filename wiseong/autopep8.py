@@ -1466,7 +1466,7 @@ class NamingConvention:
         self.fix_702 = self.fix_707
         
 
-        def fix_w705(self, result):
+    def fix_w705(self, result):
         """fix class name"""
         line_index = result['line'] - 1
         target = self.source[line_index]
