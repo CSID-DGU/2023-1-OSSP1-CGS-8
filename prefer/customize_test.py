@@ -414,18 +414,6 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
 del pycodestyle._checks['logical_line'][pycodestyle.continued_indentation]
 pycodestyle.register_check(continued_indentation)
 
-# 추가한 부분 - 이선호
-# custom.txt 파일을 읽어와서 딕셔너리로 반환
-def parse_user_customize():
-    # 사용자의 커스텀 정보를 저장할 딕셔너리
-    custom_dic = {}
-    custome_line = readlines_from_file('custom.txt')
-    for custom_row in custome_line:
-        attribute, value = custom_row.rstrip().split(':')
-        custom_dic[attribute] = value
-        
-    return custom_dic
-
 
 class FixPEP8(object):
 
@@ -1451,6 +1439,35 @@ class FixPEP8(object):
                                                                  self.source)
         self.source[line_index] = '{}\\{}'.format(
             target[:offset + 1], target[offset + 1:])
+
+
+# 추가한 부분 - 이선호
+def run_once(func):
+    """함수가 한번만 실행될 수 있도록 데코레이터 생성"""
+    is_runned = False
+    def wrapper():
+        # 내부 함수 객체는 클로져 속성에 의해 외부 변수값 기억
+        nonlocal is_runned
+        if not is_runned:
+            is_runned = True
+            return func()
+        
+    return wrapper
+
+
+class Customize:
+    # 추가한 부분 - 이선호
+    # custom.txt 파일을 읽어와서 딕셔너리로 반환, 한번만 실행
+    @run_once
+    def parse_user_customize():
+        # 사용자의 커스텀 정보를 저장할 딕셔너리
+        custom_dic = {}
+        custome_line = readlines_from_file('custom.txt')
+        for custom_row in custome_line:
+            attribute, value = custom_row.rstrip().split(':')
+            custom_dic[attribute] = value
+            
+        return custom_dic
 
 
 def get_module_imports_on_top_of_file(source, import_line_index):
