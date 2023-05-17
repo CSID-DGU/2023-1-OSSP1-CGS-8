@@ -5,10 +5,21 @@ def fix_e267(self, result):
     target = self.source[line_index]
     offset = result['column'] -1 
     line = result['line'] + 1 #에러가 발생한 라인의 밑줄
-    self.source[line_index].replace('\\',"") # \을 삭제하고
-    self.source[line_index] = self.source[line_index] + self.source[line] #해당 줄과 밑의 줄을 합친다
-    self.source[line] = '' #에러가 발생한 줄의 밑 줄을 빈 문자열로 수정하는 작업
-    
+    current_line = line_index #다음 줄 
+    while current_line >=0:
+        current_line -= 1
+        if self.source[current_line] =='\\':
+            self.source[current_line] = self.source[current_line] + self.source[line] #해당 줄과 밑의 줄을 합친다
+            self.source[line] = '' #에러가 발생한 줄의 밑 줄을 빈 문자열로 수정하는 작업
+        else:
+            continue     
+        try:
+            compile(line_index, '<string>', 'single')
+        except (SyntaxError, TypeError, ValueError):
+            break
+
+
+  
 
 #고려사항 2,3,4 
 def fix_e268(self, result):
