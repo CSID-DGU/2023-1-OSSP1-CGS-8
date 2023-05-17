@@ -1,40 +1,27 @@
-# CamelCase -> CamelCase
+# __author__ = ('Wonjun Jo <c68254@gmail.com>')
+
 class CamelCase:
     def a():
         return None
     
-# camelCase -> CamelCase
-class camelCase:    
+
+class camelCasea:    
     def a():
         return None
     
-# camelcase -> Camelcase
-class camelcase:
-    def a():
+
+class camelcaseb:
+    def b():
         return None
 
-# camel_case -> CamelCase    
-class camel_case:
-    def a():
+
+class camel_casec:
+    def c():
         return None
 
-# Camelcase -> Camelcase
-class Camelcase:
-    def a():
+
+class Camelcased:
+    def d():
         return None
     
-# Camel_Case -> CamelCase
-class Camel_Case:
-    def a():
-        return None
-
-# CAMELcase -> Camelcase
-class CAMELcase:
-    def a():
-        return None
-
-# CamelCAsE -> CamelCase
-class CamelCAsE:
-    def a():
-        return None
-    
+# python3 autopep8.py --aggressive --aggressive --aggressive test_W701.py
