@@ -5,28 +5,27 @@ def implicit_continuous_line(self, result):
     comment = target[offset:].strip()
     target = target[:offset].rstrip()
     
-    # Get the number of the line currently reading
+    # 현재 읽고 있는 라인의 번호를 저장
     current_line = line_index
     first_line = self.source[current_line][:]
-    # Compile implicit lines by replacing them with one line
+    # 암시적으로 이어지는 줄을 하나의 줄로 합쳐서 컴파일
     while current_line >= 0:
         current_line -= 1
-        # Remove '\' and add lines if '\' is included
+        # 만약 '\'가 포함되어있다면 '\' 제거 후 줄 합치기
         if self.source[current_line][-1] == chr(92):
             first_line += self.source[current_line][:-1]
         else:
             first_line += self.source[current_line][:]
         try:
             compile(first_line, '<string>', 'single')
-        except (SyntaxError, TypeError, ValueError):
-            # Escape loop for other lines not compiled
+            # 암시적 줄 잇기가 시작되는 줄을 만나면
+            # 정상적으로 컴파일되므로 루프 탈출
             break
+        except (SyntaxError, TypeError, ValueError):
+            continue
     
-    # Find the first line number that was compiled successfully
-    if current_line < 0: current_line = 0
-    else: current_line += 1
-    
-    # Match the indent level of the first line with the comment
+    # 암시적 줄 잇기가 시작되는 줄의 들여쓰기와 인라인 주석의
+    # 들여쓰기 수준 맞추기
     indent_word = _get_indentation(self.source[current_line])
     comment = indent_word + comment + '\n'
     self.source[current_line] = comment + self.source[result['line'] - 1]
