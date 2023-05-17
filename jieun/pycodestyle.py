@@ -1082,6 +1082,17 @@ def whitespace_before_comment(logical_line, tokens):
         elif token_type != tokenize.NL:
             prev_end = end
 
+# 추가한 부분 - 하지은
+@register_check
+def inline_comment(logical_line, tokens):    
+    prev_end = (0, 0)
+    for token_type, text, start, end, line in tokens:
+        if token_type == tokenize.COMMENT:
+            inline_comment = line[:start[1]].strip()
+            if inline_comment:
+                yield (start, "E267 inline comment is not recommended")
+        elif token_type != tokenize.NL:
+            prev_end = end
 
 @register_check
 def imports_on_separate_lines(logical_line):
