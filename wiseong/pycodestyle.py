@@ -1732,7 +1732,7 @@ def is_capwords(word):
     if word[0].islower():
         return False
     
-     # 숫자로 시작하는 경우
+    # 숫자로 시작하는 경우
     if word[0].isdigit():
         return False
     
