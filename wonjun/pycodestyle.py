@@ -25,7 +25,7 @@
 # ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-"""
+r"""
 Check Python source code formatting, according to PEP 8.
 
 For usage and a list of options, try this:
@@ -1082,7 +1082,18 @@ def whitespace_before_comment(logical_line, tokens):
         elif token_type != tokenize.NL:
             prev_end = end
 
-
+# 추가한 부분 - 하지은
+@register_check
+def inline_comment(logical_line, tokens):    
+    prev_end = (0, 0)
+    for token_type, text, start, end, line in tokens:
+        if token_type == tokenize.COMMENT:
+            inline_comment = line[:start[1]].strip()
+            if inline_comment:
+                yield (start, "E267 inline comment is not recommended")
+        elif token_type != tokenize.NL:
+            prev_end = end
+            
 @register_check
 def imports_on_separate_lines(logical_line):
     r"""Place imports on separate lines.
@@ -1702,6 +1713,77 @@ def python_3000_async_await_keywords(logical_line, tokens):
             "Python 3.7",
         )
 
+# 추가한 부분 - 김태욱 / class name
+def is_capwords(word):
+    
+    # 문자열이 비어 있는 경우
+    if not word:
+        return False
+
+    # 공백이 포함된 경우
+    if ' ' in word:
+        return False
+
+    # 밑줄이 포함된 경우
+    if '_' in word:
+        return False
+
+    # 첫 번째 문자가 대문자가 아닌 경우
+    if not word[0].isupper():
+        return False
+    
+    # 대문자로 시작하는 단어가 있는 경우
+    if any(w[0].isupper() for w in word.split()):
+        return False
+
+    return True
+
+@register_check
+def class_name_convention(logical_line, tokens):    
+    prev_end = (0, 0)
+    for token_type, text, start, end, line in tokens:
+        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text) and "class" in line:
+            not_recommand_class_name = line[:start[1]].strip()
+            if not_recommand_class_name:
+                yield (start, "W701 class name is recommended CapitalizedWords")
+        elif token_type != tokenize.NL:
+            prev_end = end
+            
+# 추가한 부분 - 김태욱 / function name
+def is_snakecase(word):
+    
+    # 문자열이 비어 있는 경우
+    if not word:
+        return False
+
+    # 공백이 포함된 경우
+    if ' ' in word:
+        return False
+    
+    # 첫 번째 문자가 소문자가 아닌 경우
+    if not word[0].islower():
+        return False
+    
+    # 모든 문자가 소문자이거나 '_'가 아닌 경우
+    if not all(char.islower() or char == '_' for char in word):
+        return False
+    
+    # 함수가 던더메서드인 경우
+    if '__' in word:
+        return False
+    
+    return True
+    
+@register_check
+def func_name_convention(logical_line, tokens):    
+    prev_end = (0, 0)
+    for token_type, text, start, end, line in tokens:
+        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_snakecase(text) and "def" in line:
+            not_recommand_func_name = line[:start[1]].strip()
+            if not_recommand_func_name:
+                yield (start, "W702 function name is recommended snake_case")
+        elif token_type != tokenize.NL:
+            prev_end = end
 
 ########################################################################
 @register_check
