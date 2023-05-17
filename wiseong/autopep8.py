@@ -1476,7 +1476,7 @@ class FixPEP8(object):
         target = self.source[line_index]
         offset = result['column'] - 1
         
-        end_index = target.index(":")
+        end_index = target.index("(")
         function_name = target[offset:end_index]
         
         # def Exam1 (): 일 경우.
