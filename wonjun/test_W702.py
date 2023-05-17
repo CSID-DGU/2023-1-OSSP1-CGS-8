@@ -1,27 +1,21 @@
-# snake_case -> snake_case
+# __author__ = ('Wonjun Jo <c68254@gmail.com>')
+
 def snake_case():
     return None
 
-# SnakeCase -> snake_case
-def SnakeCase():
+def SnakeCasea():
     return None
 
-# snakeCase -> snake_case
-def snakeCase():
+def snakeCaseb():
     return None
 
-# Snake_Case -> snake_case
-def Snake_Case():
+def snakecasec():
     return None
 
-# snakecase -> snakecase
-def snakecase():
+def Snake_Cased():
     return None
 
-# snake__case -> 
-def snake__case():
+def snake__casee():
     return None
 
-# _snake_case_ ->
-def _snake_case_():
-    return None
+# python3 autopep8.py --aggressive --aggressive --aggressive test_W702.py
