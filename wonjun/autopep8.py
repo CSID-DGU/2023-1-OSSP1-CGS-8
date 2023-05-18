@@ -83,6 +83,7 @@ import token
 import tokenize
 import warnings
 import ast
+import string
 from configparser import ConfigParser as SafeConfigParser, Error
 
 import pycodestyle
@@ -410,10 +411,8 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
         else:
             yield (pos, 'E125 {}'.format(desired_indent))
 
-
 del pycodestyle._checks['logical_line'][pycodestyle.continued_indentation]
 pycodestyle.register_check(continued_indentation)
-
 
 class FixPEP8(object):
 
@@ -453,7 +452,6 @@ class FixPEP8(object):
         - e731
         - w291
         - w503,504
-
     """
 
     def __init__(self, filename,
@@ -518,6 +516,14 @@ class FixPEP8(object):
         self.fix_e703 = self.fix_e702
         self.fix_w292 = self.fix_w291
         self.fix_w293 = self.fix_w291
+        
+        # 추가한 부분 김위성
+        # 작명 컨벤션 aggressive 3레벨 일 경우에만 실행
+        if options and (options.aggressive >= 3 or options.experimental):
+            self.fix_w701 = self.fix_w705
+        
+        if options and (options.aggressive >= 3 or options.experimental):
+            self.fix_w702 = self.fix_w707
 
     def _fix_source(self, results):
         try:
@@ -1435,6 +1441,274 @@ class FixPEP8(object):
                                                                  self.source)
         self.source[line_index] = '{}\\{}'.format(
             target[:offset + 1], target[offset + 1:])
+        
+    # 추가한 부분 (작명 컨벤션 - 클래스 이름) - 김위성
+    def fix_w705(self, result):
+        
+        """fix class name"""
+        line_index = result['line'] - 1
+        target = self.source[line_index]
+        offset = result['column'] - 1
+        
+        end_index = target.index(":")
+        class_name = target[offset:end_index]
+        
+        # 상속받는 자식 클래스인 경우
+        if '(' in class_name:
+            class_name = class_name[0 : class_name.index("(")]
+            
+        class_name = class_name.strip()
+        
+        fix_class_name = to_capitalized_words(class_name)
+        
+        # 1. 이중 for문은 아니지만 for문 두 번 돌아야 함 -> 더 효율적인 방법?
+        # 2. 단일 파일에서 실행된다고 가정
+        if is_vaild_name(fix_class_name, self.source):
+            for i, s in enumerate(self.source):
+                self.source[i] = s.replace(class_name, fix_class_name)
+        
+        return None #return 필요 없음, 아래 메소드와 구분 지으려고 잠시 두는 용도
+
+    # 추가한 부분 (작명 컨벤션 - 함수)- 김위성
+    def fix_w707(self, result):
+        """fix function name"""
+        line_index = result['line'] - 1
+        target = self.source[line_index]
+        offset = result['column'] - 1
+        
+        end_index = target.index(":")
+        function_name = target[offset:end_index]
+        
+        # def Exam1 (): 일 경우.
+        # 공백 수정 후 호출되는 것이면 굳이 필요없다.
+        # 하지만 customize해서 공백을 제거안했다면 필요하다
+        #   -> 이때는 필요한 코드
+        function_name = function_name.strip()
+        
+        fix_function_name = camel_to_snake(function_name)
+        
+        if is_vaild_name(fix_function_name, self.source):
+            for i, s in enumerate(self.source):
+                self.source[i] = s.replace(function_name, fix_function_name)
+        
+        return None #return 필요 없음, 아래 메소드와 구분 지으려고 잠시 두는 용도
+
+
+# 추가한 부분 - 김위성
+# is_vaild_name 메소드를 클래스 내부로 넣을지 말지
+def is_vaild_name(name, source):
+    if keyword.iskeyword(name): return False
+    for s in source:
+        if name in s:
+            return False
+    return True
+
+# 수정
+def is_snake_case(word):
+    if not word[0].islower():
+        return False
+    if not all(char.islower() or char == '_' for char in word):
+        return False
+    if '__' in word:
+        return False
+    if word in keyword.kwlist:
+        return False
+    
+    return True
+
+# 수정
+# 카멜 케이스 로직을 다시 생각해봐야 할 것 같음
+def is_camel_case(word):
+    if '_' in word:
+        return False
+    if word[0].isupper():
+        return False
+    # 아래 if 문의 존재이유가 없음.
+    # if any(w[0].isupper() for w in word.split()):
+    #     return False
+    return True
+
+def to_capitalized_words(word):
+    """return capitalized words
+    
+    class naming convention
+    """
+    if is_snake_case(word): return string.capwords(word, sep='_').replace('_', '') 
+    
+    return word[0].upper() + word[1:]
+
+def snake_to_capwords(snake_case):
+    """return capwords"""
+    if is_snake_case(snake_case): return snake_case
+    capitalized_words = string.capwords(snake_case, sep='_').replace('_', '')
+    return capitalized_words
+    
+def camel_to_snake(camel_case):
+    """return snake case
+    
+    method naming convention
+    """
+    snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
+    return snake_case
+
+
+# 추가한 부분 - 김위성
+# 해결해야 할 부분
+# - FixPEP8과 상속 문제
+# - fix(), _fix_source()
+# class NamingConvention:
+    
+#     def __init__(self, filename,
+#                  options,
+#                  contents=None,
+#                  long_line_ignore_cache=None):
+#         self.filename = filename
+#         if contents is None:
+#             self.source = readlines_from_file(filename)
+#         else:
+#             sio = io.StringIO(contents)
+#             self.source = sio.readlines()
+#         self.options = options
+#         self.indent_word = _get_indentword(''.join(self.source))
+        
+#         # collect imports line
+#         self.imports = {}
+#         for i, line in enumerate(self.source):
+#             if (line.find("import ") == 0 or line.find("from ") == 0) and \
+#                     line not in self.imports:
+#                 # collect only import statements that first appeared
+#                 self.imports[line] = i
+
+#         self.long_line_ignore_cache = (
+#             set() if long_line_ignore_cache is None
+#             else long_line_ignore_cache)
+        
+#         # option이 aggressive 3레벨 일 경우 또는 experimental에만 실행
+#         if options and (options.aggressive >= 3 or options.experimental):
+#             self.fix_w701 = self.fix_w705
+        
+#         if options and (options.aggressive >= 3 or options.experimental):
+#             self.fix_w702 = self.fix_w707
+        
+#         # self.fix_w701 = self.fix_w705 
+#         # self.fix_w702 = self.fix_w707
+
+#     def fix_w705(self, result):
+#         """fix class name"""
+#         line_index = result['line'] - 1
+#         target = self.source[line_index]
+#         offset = result['column'] - 1
+#         end_index = target.index(":")
+        
+#         class_name = target[offset:end_index]
+        
+#         # 상속받는 자식 클래스인 경우
+#         if '(' in class_name:
+#             class_name = class_name[0 : class_name.index("(")]
+        
+#         class_name = class_name.strip()
+        
+#         fix_class_name = self.to_capitalized_words(class_name)
+        
+#         # 1. 이중 for문은 아니지만 for문 두 번 돌아야 함 -> 더 효율적인 방법?
+#         # 2. 단일 파일에서 실행된다고 가정
+#         if self.is_vaild_name(fix_class_name):
+#             for i, s in enumerate(self.source):
+#                 self.source[i] = s.replace(class_name, fix_class_name)
+        
+#         return None #return 필요 없음, 아래 메소드와 구분 지으려고 잠시 두는 용도
+
+#     def fix_w707(self, result):
+#         """fix function name"""
+#         line_index = result['line'] - 1
+#         target = self.source[line_index]
+#         offset = result['column'] - 1
+        
+#         end_index = target.index(":")
+#         function_name = target[offset:end_index]
+        
+#         # def Exam1 (): 일 경우.
+#         # 공백 수정 후 호출되는 것이면 굳이 필요없다.
+#         # - customize해서 공백을 제거 안했다면 필요한 코드
+#         function_name = function_name.strip()
+        
+#         fix_function_name = self.camel_to_snake(function_name)
+        
+#         if self.is_vaild_name(fix_function_name):
+#             for i, s in enumerate(self.source):
+#                 self.source[i] = s.replace(function_name, fix_function_name)
+        
+#         return None #return 필요 없음, 아래 메소드와 구분 지으려고 잠시 두는 용도
+    
+#     def is_vaild_name(self, name):
+#         """이름 변경 가능 여부 판별"""
+        
+#         # 변경하려는 이름이 키워드인 경우
+#         if keyword.iskeyword(name): return False
+#         # 변경하려는 이름이 파일내에 존재
+#         for s in self.source:
+#             if name in s:
+#                 return False
+#         return True
+    
+#     def is_snake_case(word):
+#         if not word:
+#             return False
+
+#         if not word[0].islower():
+#             return False
+
+#         if not all(char.islower() or char == '_' for char in word):
+#             return False
+
+#         if '__' in word:
+#             return False
+
+#         if word in keyword.kwlist:
+#             return False
+        
+#         return True
+    
+#     def is_camel_case(word):
+#         if not word:
+#             return False
+
+#         if ' ' in word:
+#             return False
+
+#         if '_' in word:
+#             return False
+
+#         if word[0].isupper():
+#             return False
+
+#         if any(w[0].isupper() for w in word.split()):
+#             return False
+
+#         return True
+    
+#     def to_capitalized_words(self, word):
+#         """return capitalized words
+        
+#         class naming convention
+#         """
+#         if self.is_snake_case(word): return string.capwords(word, sep='_').replace('_', '') 
+#         return word[0].upper() + word[1:]
+
+#     def snake_to_capwords(self, snake_case):
+#         """return capwords"""
+#         if self.is_snake_case(snake_case): return snake_case
+#         capitalized_words = string.capwords(snake_case, sep='_').replace('_', '')
+#         return capitalized_words
+        
+#     def camel_to_snake(self, camel_case):
+#         """return snake case
+        
+#         method naming convention
+#         """
+#         if not self.is_camel_case(camel_case): return camel_case.lower()
+#         snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
+#         return snake_case
 
 
 def get_module_imports_on_top_of_file(source, import_line_index):
@@ -1987,7 +2261,7 @@ def _is_binary_operator(token_type, text):
 Token = collections.namedtuple('Token', ['token_type', 'token_string',
                                          'spos', 'epos', 'line'])
 
-    
+
 class ReformattedLines(object):
 
     """The reflowed lines of atoms.
@@ -1995,18 +2269,6 @@ class ReformattedLines(object):
     Each part of the line is represented as an "atom." They can be moved
     around when need be to get the optimal formatting.
 
-    이 코드는 Python에서 코드를 파싱하고, 이를 변환하여 새로운 코드를 생성하는 기능을 수행하는 클래스와 함수를 정의한다.
-    _Indent 클래스는 들여쓰기를 나타내며, emit() 메서드를 사용하여 들여쓰기를 반환합니다. size() 메서드를 사용하여 들여쓰기 크기를 반환합니다.
-    _Space 클래스는 공백을 나타내며, emit() 메서드를 사용하여 공백을 반환합니다. size() 메서드를 사용하여 공백 크기 1을 반환합니다.
-    _LineBreak 클래스는 줄 바꿈을 나타내며, emit() 메서드를 사용하여 줄 바꿈 문자를 반환합니다. size() 메서드를 사용하여 줄 바꿈 크기를 반환합니다.
-    
-    __init__ 함수는 max_line_length 매개 변수를 허용하고, 이 매개 변수는 생성 된 코드의 최대 행 길이를 정의합니다. 이 함수는 객체를 초기화하고 emit() 메서드를 사용하여 생성 된 코드를 반환합니다.
-    __repr__ 함수는 객체를 나타내는 문자열을 반환합니다. 이 함수는 emit() 메서드를 사용하여 생성 된 코드를 반환합니다.
-
-    각 클래스는 emit() 메서드를 사용하여 코드를 생성하고, size() 메서드를 사용하여 클래스에서 생성 된 코드 요소의 크기를 정의합니다. 
-    __init__() 함수는 객체를 초기화하고 emit() 메서드를 사용하여 생성 된 코드를 반환합니다. __repr__() 함수는 객체를 나타내는 문자열을 반환합니다.
-
-    이 코드는 들여쓰기, 공백, 줄 바꿈 등의 코드 요소를 정의하여 파싱된 코드를 적절한 형식으로 변환하여 반환하는 데 사용될 수 있습니다.
     """
 
     ###########################################################################
@@ -2060,16 +2322,7 @@ class ReformattedLines(object):
 
     ###########################################################################
     # Public Methods
-    """add(self, obj, indent_amt, break_after_open_bracket)
-    add 메서드는 객체와 들여쓰기(indent_amt) 값, 그리고 open bracket 이후에 줄바꿈 여부(break_after_open_bracket)를 매개변수로 받습니다. 
-    만약 추가하려는 객체가 Atom이면 _add_item 메서드를 호출하여 현재 줄에 추가하고, Container이면 _add_container 메서드를 호출하여 줄을 쪼개서 추가합니다.
 
-    add_comment 메서드는 item을 매개변수로 받아, item 앞에 주석을 추가합니다. 
-    추가하기 전에, 빈 칸(Space) 객체가 있는지 확인하여 없으면 num_spaces에 2를 할당하고, 있다면 1을 할당합니다. 
-    그 다음, 라인이 2개 이상인 경우, 라인의 마지막 요소(-1번 인덱스)가 Space 객체인지 확인하고, 맞으면 num_spaces에서 1을 빼줍니다. 
-    마찬가지로 라인이 3개 이상인 경우, 라인의 마지막에서 두 번째 요소(-2번 인덱스)도 Space 객체인지 확인하고, 맞으면 num_spaces에서 1을 빼줍니다. 
-    마지막으로, num_spaces가 0보다 크면, num_spaces만큼 Space 객체를 추가하고, item도 추가합니다.
-    """
     def add(self, obj, indent_amt, break_after_open_bracket):
         if isinstance(obj, Atom):
             self._add_item(obj, indent_amt)
@@ -2091,11 +2344,6 @@ class ReformattedLines(object):
             num_spaces -= 1
         self._lines.append(item)
 
-    """add_indent(self, indent_amt): 들여쓰기를 추가합니다. _Indent 클래스의 인스턴스를 만들어서 self._lines 리스트에 추가합니다.
-    add_line_break(self, indent): 줄 바꿈을 추가합니다. _LineBreak 클래스의 인스턴스를 만들어서 self._lines 리스트에 추가하고, add_indent 메서드를 호출하여 새로운 들여쓰기를 추가합니다.
-    add_line_break_at(self, index, indent_amt): 특정 인덱스에 줄 바꿈을 추가합니다. 
-    _LineBreak 클래스의 인스턴스를 만들어서 self._lines 리스트에 삽입하고, 인덱스 다음에 새로운 들여쓰기를 추가하기 위해 _Indent 클래스의 인스턴스를 만들어서 삽입합니다.
-    """
     def add_indent(self, indent_amt):
         self._lines.append(self._Indent(indent_amt))
 
@@ -2107,17 +2355,6 @@ class ReformattedLines(object):
         self._lines.insert(index, self._LineBreak())
         self._lines.insert(index + 1, self._Indent(indent_amt))
 
-    """add_space_if_needed(self, curr_text, equal=False)
-    이 함수는 현재 텍스트와 equal 매개 변수가 주어지면, 현재 라인에 공백을 추가해야 하는지 여부를 결정합니다. 이 함수는 다음과 같은 단계로 실행됩니다.
-    이전 항목과 그 이전 항목에서 문자열 표현을 가져옵니다.
-    이전 항목이 키워드, 식별자, 숫자 또는 문자열이고 현재 항목이 공백, 구분 기호, 마침표, 쉼표 또는 콜론이 아닌 연산자인 경우에는 현재 라인에 공백을 추가합니다.
-    이전 항목이 '.'이 아니고 현재 항목이 'import'가 아닌 경우에는 '.' 주위에 공백을 추가하지 않습니다.
-    이전 항목이 '}' 또는 ']'로 끝나고 현재 항목이 구분 기호 또는 '}' 또는 ']'로 시작하지 않는 경우 괄호 주위에 공백을 추가하지 않습니다.
-    이전 항목이 콜론이나 쉼표로 끝나는 경우 이전 항목과 현재 항목 사이에 공백을 추가합니다.
-    equal 매개 변수가 True이고 이전 항목이 '='인 경우 '=' 주위에 공백을 추가합니다.
-    이전 항목과 그 이전 항목이 존재하고, 이전 항목이 숫자, 문자열 또는 식별자가 아닌 경우, 이전 항목이 '+' 또는 '-'가 아닌 경우, 이전 항목이 '*' 또는 '/'와 같은 이항 연산자인 경우 현재 항목과 이전 항목 사이에 공백을 추가합니다.
-    이 함수는 _Space 객체를 _lines 리스트에 추가하여 현재 라인에 공백을 추가합니다. 이 함수는 반환 값을 갖지 않습니다.
-    """
     def add_space_if_needed(self, curr_text, equal=False):
         if (
             not self._lines or isinstance(
@@ -2164,12 +2401,6 @@ class ReformattedLines(object):
         ):
             self._lines.append(self._Space())
 
-    """previous_item()
-    이전의 공백이 아닌 항목을 반환합니다. 이전 항목은 _prev_item 변수에 저장되어 있습니다.
-
-    fits_on_current_line(item_extent) 함수는 item_extent 매개변수와 현재 줄의 크기를 비교하여, item_extent 값이 현재 줄에 추가할 수 있는지 여부를 반환합니다. 
-    current_size() 메서드를 사용하여 현재 줄의 크기를 가져옵니다. 만약 current_size() + item_extent가 _max_line_length보다 작거나 같으면 True를 반환하고, 그렇지 않으면 False를 반환합니다.
-    """
     def previous_item(self):
         """Return the previous non-whitespace item."""
         return self._prev_item
@@ -2177,12 +2408,6 @@ class ReformattedLines(object):
     def fits_on_current_line(self, item_extent):
         return self.current_size() + item_extent <= self._max_line_length
 
-    """current_size()
-    이 코드는 현재 줄의 크기(들여쓰기를 제외한)를 반환하는 current_size() 메서드입니다.
-    메서드는 _lines 리스트의 끝에서부터 역순으로 반복하면서, 각 요소의 크기를 합산합니다.
-    isinstance() 함수를 사용하여 요소가 _LineBreak 클래스의 인스턴스인지 확인합니다. 만약 그렇다면, 현재 줄의 크기 계산을 완료하고 size 값을 반환합니다.
-    이 코드는 _lines 리스트에서 현재 줄의 크기(들여쓰기를 제외한)를 계산하는 데 사용됩니다.
-    """
     def current_size(self):
         """The size of the current line minus the indentation."""
         size = 0
@@ -2192,26 +2417,12 @@ class ReformattedLines(object):
                 break
 
         return size
-    
-    """line_empty()
-    이 함수는 _lines 리스트의 마지막 요소가 _LineBreak 클래스의 인스턴스이거나 _Indent 클래스의 인스턴스인 경우 True를 반환합니다.
-    메서드는 먼저 _lines 리스트가 비어있는지 확인하고, 만약 리스트가 비어있다면 False를 반환합니다.
-    그렇지 않은 경우, isinstance() 함수를 사용하여 _lines 리스트의 마지막 요소가 _LineBreak 클래스의 인스턴스이거나 _Indent 클래스의 인스턴스인지 확인합니다. 만약 그렇다면, 해당 함수는 True를 반환합니다.
-    이 코드는 코드 요소를 추가하기 전에 _lines 리스트의 마지막 요소가 새로운 코드 요소를 추가하기 위한 빈 줄을 필요로 하는지 여부를 확인하는 데 사용됩니다.
-    """
+
     def line_empty(self):
         return (self._lines and
                 isinstance(self._lines[-1],
                            (self._LineBreak, self._Indent)))
 
-    """emit() 
-    이 함수는 _lines 리스트에 저장된 코드 요소를 반복하면서, 각 요소를 문자열로 변환하고, 이를 합쳐서 최종 문자열을 생성합니다.
-    string 변수는 최종 생성된 문자열을 저장합니다. for 루프는 _lines 리스트를 반복하면서 각 요소를 문자열로 변환합니다.
-    isinstance() 함수는 현재 요소가 _LineBreak 클래스의 인스턴스인지 확인합니다. 만약 해당 요소가 _LineBreak 클래스의 인스턴스라면, string 변수에서 오른쪽 끝에 있는 모든 공백을 제거합니다.
-    그 다음, item.emit() 메서드를 사용하여 각 요소를 문자열로 변환하고, 이를 string 변수에 추가합니다.
-    최종적으로 string.rstrip() + '\n'를 사용하여 마지막 공백을 제거하고, 마지막에 새 줄을 추가하여 최종 생성된 코드 문자열을 반환합니다.
-    이 코드는 파싱된 코드 요소를 적절한 문자열로 변환하여 반환하는 데 사용됩니다.
-    """
     def emit(self):
         string = ''
         for item in self._lines:
@@ -2223,17 +2434,7 @@ class ReformattedLines(object):
 
     ###########################################################################
     # Private Methods
-    """_add_item(self, item, indent_amt)
-    이 함수는 _add_item이라는 이름으로, Python 코드에서 문장을 재구성하는 데 사용됩니다. 이 함수는 주어진 항목(item)을 현재 행에 추가하고, 적절한 형식으로 재구성한 다음, 결과 문장을 반환합니다.
-    이 함수는 item과 indent_amt라는 두 개의 매개변수를 취합니다. item 매개변수는 재구성할 텍스트 문자열 또는 다른 Python 객체입니다. indent_amt 매개변수는 추가 들여쓰기 수준을 결정하는 데 사용됩니다.
-    _add_item 함수는 먼저 입력 매개변수인 item을 문자열로 변환한 다음, 현재 행에 추가합니다. 이 함수는 이전에 추가된 아이템과 현재 아이템이 문자열인 경우, 두 개의 문자열 리터럴이 연속으로 나오지 않도록, 이전 아이템과 현재 아이템 사이에 빈 줄을 삽입합니다.
-    함수의 두 번째 부분에서는 item이 컨테이너에 추가되는 경우와 컨테이너가 아닌 경우를 구분하여 처리합니다. 
-    컨테이너에 추가하는 경우, _prevent_default_initializer_splitting 함수와 _split_after_delimiter 함수를 사용하여 현재 행에 적절한 추가를 수행합니다. 
-    컨테이너가 아닌 경우에는 새로운 줄에 추가할 수 있도록 줄 바꿈을 수행하고, 들여쓰기를 적용합니다.
-    이 함수는 마지막으로 item의 텍스트 값을 기반으로 현재 브래킷 깊이를 갱신합니다. 
-    item의 값이 '(', '[', '{' 중 하나인 경우, 브래킷 깊이를 1 증가시키고, ')', ']', '}' 중 하나인 경우, 브래킷 깊이를 1 감소시킵니다. 
-    반환값은 없으며, 결과 문장은 _lines 속성을 통해 접근할 수 있습니다.
-    """
+
     def _add_item(self, item, indent_amt):
         """Add an item to the line.
 
@@ -2275,18 +2476,6 @@ class ReformattedLines(object):
             self._bracket_depth -= 1
             assert self._bracket_depth >= 0
 
-    """_add_container(self, container, indent_amt, break_after_open_bracket)
-    이 함수는 컨테이너 객체(리스트, 튜플, 딕셔너리 등)를 추가하는 데 사용됩니다. 
-    매개변수 container는 추가하려는 컨테이너 객체를 나타내고, indent_amt는 들여쓰기 수준을 결정하는 데 사용됩니다. 
-    break_after_open_bracket은 컨테이너 객체가 여러 줄에 걸쳐 있을 때, 여는 괄호 뒤에 개행을 할지 여부를 결정합니다.
-    
-    함수는 다음과 같은 작업을 수행합니다.
-    container가 객체인지 확인합니다. 만약 Atom 객체이면 _add_item() 메서드를 사용하여 추가하고 함수를 종료합니다.
-    container 객체가 한 줄에 들어가지 않을 정도로 길다면, 이전 항목이 =가 아니고, 현재 줄이 비어 있지 않은 경우, 그리고 컨테이너 객체가 현재 줄에 들어가지 않을만큼 크다면 컨테이너 객체를 다음 줄에 추가합니다. 
-    이 때 여는 괄호 뒤에 개행을 할 지 여부를 break_after_open_bracket 매개변수에 따라 결정합니다. 만약 container가 한 줄에 들어가면, 현재 줄에 추가합니다.
-    컨테이너 객체가 ListComprehension 또는 IfExpression 클래스의 인스턴스인 경우, 들여쓰기 수준을 indent_amt로 설정합니다.
-    container.reflow() 메서드를 호출하여 컨테이너 객체를 추가하고, 들여쓰기와 break_after_open_bracket를 전달합니다.
-    """
     def _add_container(self, container, indent_amt, break_after_open_bracket):
         actual_indent = indent_amt + 1
 
@@ -2322,10 +2511,7 @@ class ReformattedLines(object):
         # container.
         container.reflow(self, ' ' * actual_indent,
                          break_after_open_bracket=break_after_open_bracket)
-        
-    """_prevent_default_initializer_splitting(self, item, indent_amt)
-    
-    """
+
     def _prevent_default_initializer_splitting(self, item, indent_amt):
         """Prevent splitting between a default initializer.
 
@@ -2806,7 +2992,7 @@ def _parse_tokens(tokens):
             parsed_tokens.append(Atom(tok))
 
         index += 1
-
+    print(parsed_tokens)
     return parsed_tokens
 
 
@@ -2886,7 +3072,6 @@ def _shorten_line_at_tokens(tokens, source, indentation, indent_word,
 
     The input is expected to be free of newlines except for inside
     multiline strings and at the end.
-
     """
     offsets = []
     for (index, _t) in enumerate(token_offsets(tokens)):
@@ -3058,79 +3243,141 @@ def _execute_pep8(pep8_options, source):
     checker.check_all()
     return checker.report.full_error_results()
 
-
 def _remove_leading_and_normalize(line, with_rstrip=True):
     # ignore FF in first lstrip()
     if with_rstrip:
         return line.lstrip(' \t\v').rstrip(CR + LF) + '\n'
     return line.lstrip(' \t\v')
 
-
+#김위성##############################################################################################################################
+"""
+잘못 들여쓰기된 코드 4개의 공백 들여쓰기로 다시 들여씀
+object - 소스(source), 남은 탭(leave_tab)
+"""
 class Reindenter(object):
-
     """Reindents badly-indented code to uniformly use four-space indentation.
 
     Released to the public domain, by Tim Peters, 03 October 2000.
-
     """
-
+    
+    
+    """
+    input_text : 분석할 source code를 문자열로 입력받음
+    leave_tabs : True면 들여쓰기에 사용되는 탭 문자를 삭제하지 않고 그대로 둡니다.
+                False면 탭 문자를 공백으로 바꿈 -> PEP-8에서 탭 대신 공백 4칸 권장.
+    """
     def __init__(self, input_text, leave_tabs=False):
-        sio = io.StringIO(input_text)
-        source_lines = sio.readlines()
+        
+        # io.StringIO()를 사용하면 input_text를 읽기 전용으로 처리할 수 있다.
+        sio = io.StringIO(input_text)  
+        
+        #sio.readlines() 모든 줄을 읽음
+        source_lines = sio.readlines()  
 
+        """ 
+        multiline_string_lines 함수를 사용하여 
+        input_text에서 멀티라인 문자열의 첫 줄 번호 목록을 
+        가져와 string_content_line_numbers 변수에 저장합니다.
+        
+        multiline_string_lines(input_text)는 아래와 같은 코드에서 1을 반환
+        line_number
+        1 if a > b 
+        2     and b < c
+        3     and c < d: print("hello")
+        """
         self.string_content_line_numbers = multiline_string_lines(input_text)
 
         # File lines, rstripped & tab-expanded. Dummy at start is so
         # that we can use tokenize's 1-based line numbering easily.
         # Note that a line is all-blank iff it is a newline.
+        # 파일 라인이 줄 바뀜하고 탭을 확장시킨다. 
+        # 각 줄의 번호와 해당 줄 내용(소스 코드)를 튜플로 저장시켜준다.! -> 
+        # init 이기 때문에 일단 소스 분석하고 저장만 함.
+        # 때문에 start=1로 설정, 새 줄(new line)이면 해당 라인의 소스코드가 없겠지
         self.lines = []
         for line_number, line in enumerate(source_lines, start=1):
             # Do not modify if inside a multiline string.
+            
+            # 라인이 멀티라인이면
             if line_number in self.string_content_line_numbers:
                 self.lines.append(line)
-            else:
+            else: # 라인이 멀티라인이 아니면 
                 # Only expand leading tabs.
                 with_rstrip = line_number != len(source_lines)
-                if leave_tabs:
+                if leave_tabs: # leave_tabs가 True면 tab을 공백 4칸으로 안 바꾸고 들여쓰기로 사용
+                    
+                    # _remove_leading_and_normalize 함수를 사용하여 
+                    # 해당 줄의 앞쪽 공백 문자를 삭제하고
                     self.lines.append(
                         _get_indentation(line) +
                         _remove_leading_and_normalize(line, with_rstrip)
                     )
-                else:
+                else: #  False이면 탭 문자를 공백으로 바꿈
+                    #  _remove_leading_and_normalize 함수를 사용하여 
+                    # 해당 줄의 앞쪽 공백 문자를 삭제합니다. 이렇게 처리된 줄은 lines 리스트에 추가됩니다.
                     self.lines.append(
                         _get_indentation(line).expandtabs() +
                         _remove_leading_and_normalize(line, with_rstrip)
                     )
 
+        # 마지막으로, None 값을 lines 리스트의 첫 번째 요소로 추가하고, 
+        # index 변수를 1로 초기화합니다. index 변수는 소스 코드에서 다음으로 처리할 줄의 인덱스를 나타냄
+        # input_text 변수는 생성자가 호출될 때 받은 input_text 매개변수의 값을 그대로 저장합니다.
         self.lines.insert(0, None)
         self.index = 1  # index into self.lines of next line
         self.input_text = input_text
 
+    """
+    들여쓰기를 수정하고, 라인 번호를 수정함.
+    line number는 1부터 인덱스 되어있다.
+    indent_size=DEFAULT_INDENT_SIZE인데 
+    DEFAULT_INDENT_SIZE = 4, 공백 4칸을 디폴트로 들여쓰기 하겠다는 뜻
+    """
     def run(self, indent_size=DEFAULT_INDENT_SIZE):
         """Fix indentation and return modified line numbers.
 
         Line numbers are indexed at 1.
-
+        
         """
         if indent_size < 1:
             return self.input_text
 
+        # _reindent_stats 함수는 tokenize.generate_tokens 함수를 사용하여 코드를 분석하고, 
+        # 코드의 각 줄에 대한 들여쓰기 상태를 반환
+        # tokenize.generate_tokens(self.getline)을 활용하여 
+        # 라인의 문자열 상태 반환받음 (라인 번호와 들여쓰기 레벨)
         try:
             stats = _reindent_stats(tokenize.generate_tokens(self.getline))
-        except (SyntaxError, tokenize.TokenError):
+        except (SyntaxError, tokenize.TokenError):  # 라인에 구문 에러나 토큰 에러 있을 경우 
             return self.input_text
-        # Remove trailing empty lines.
+        
+        # Remove trailing empty lines. - 뒤의 빈 라인 지우려고 line변수 사용
         lines = self.lines
-        # Sentinel.
+        
+        # Sentinel.  - 작업하는 라인의 길이
         stats.append((len(lines), 0))
-        # Map count of leading spaces to # we want.
+        
+        # Map count of leading spaces to # we want. - 각 줄의 들여쓰기가 어떻게 바뀔지를 나타내는 딕셔너리 have2want
         have2want = {}
         # Program after transformation.
+        # after는 들여쓰기가 변환된 코드 저장
         after = []
         # Copy over initial empty lines -- there's nothing to do until
         # we see a line with *something* on it.
         i = stats[0][0]
         after.extend(lines[1:i])
+        
+        """
+        1. 들여쓰기를 조정할 라인을 선택합니다.
+        2. 해당 라인의 현재 들여쓰기 수(have)와 원하는 들여쓰기 수(want)를 계산합니다.
+        3. have 값과 want 값을 기억해 두는데, have 값이 같으면 want 값도 같도록 매핑(mapping)합니다.
+        4. 현재 라인의 들여쓰기 수(have)와 원하는 들여쓰기 수(want)의 차이(diff)를 계산합니다.
+        5. diff 값에 따라 들여쓰기를 적절히 조정합니다.
+            diff 값이 0이면 들여쓰기를 조정하지 않습니다.
+            diff 값이 양수이면 들여쓰기 수를 늘립니다.
+            diff 값이 음수이면 들여쓰기 수를 줄입니다.
+        6. 적절한 들여쓰기가 적용된 라인을 after 리스트에 추가합니다.
+        """
         for i in range(len(stats) - 1):
             thisstmt, thislevel = stats[i]
             nextstmt = stats[i + 1][0]
@@ -3174,7 +3421,7 @@ class Reindenter(object):
                 after.extend(lines[thisstmt:nextstmt])
             else:
                 for line_number, line in enumerate(lines[thisstmt:nextstmt],
-                                                   start=thisstmt):
+                                                    start=thisstmt):
                     if line_number in self.string_content_line_numbers:
                         after.append(line)
                     elif diff > 0:
@@ -3188,6 +3435,7 @@ class Reindenter(object):
 
         return ''.join(after)
 
+    # 토크나이징을 위한 라인 반환
     def getline(self):
         """Line-getter for tokenize."""
         if self.index >= len(self.lines):
@@ -3197,7 +3445,14 @@ class Reindenter(object):
             self.index += 1
         return line
 
-
+"""
+line number와 indent level을 결정하여 반환해준다.
+각 라인의 statement와 주석 라인을 처리
+주석 라인은 indent level이 -1로 처리했는데,
+    토큰화하는 signal이 주석에 대해 뭘 처리해줘야 될지 모르기 때문이다. 이건 autopep8 측도 해결 안된듯.
+    
+tokens 매개변수는 tokenize.generate_tokens()에 의해 토크나이징된 (문자열)이터레이터
+"""
 def _reindent_stats(tokens):
     """Return list of (lineno, indentlevel) pairs.
 
@@ -3206,8 +3461,8 @@ def _reindent_stats(tokens):
     indeed, they're our headache!
 
     """
-    find_stmt = 1  # Next token begins a fresh stmt?
-    level = 0  # Current indent level.
+    find_stmt = 1  # Next token begins a fresh stmt? - 다음 토큰이 새로운 statement를 시작하는 놈인지
+    level = 0  # Current indent level. - 현재 들여쓰기 레벨 저장하는 level 변수
     stats = []
 
     for t in tokens:
@@ -3215,30 +3470,50 @@ def _reindent_stats(tokens):
         sline = t[2][0]
         line = t[4]
 
-        if token_type == tokenize.NEWLINE:
+        # tokenize.NEWLINE 토큰이 나오면, 
+        # 새로운 문장이 시작될 것이기 때문에. find_stmt를 1로 설정해줌
+        if token_type == tokenize.NEWLINE: 
             # A program statement, or ENDMARKER, will eventually follow,
             # after some (possibly empty) run of tokens of the form
             #     (NL | COMMENT)* (INDENT | DEDENT+)?
             find_stmt = 1
 
+        # tokenize.INDENT 토큰이 나오면, 새로운 문장이 시작하기 때문에  
+        # find_stmt를 1로 설정하고, level을 1 증가시킴
         elif token_type == tokenize.INDENT:
             find_stmt = 1
             level += 1
 
+        # tokenize.DEDENT 토큰이 나오면, 새로운 문장이 시작될 것입니다. 
+        #   -> DEDENT는 INDENT라인이 끝나고 나오는 라인
+        #   elif token_type == tokenize.DEDENT:
+        #       find_stmt = 1
+        #       level -= 1
+        #   #### 위 코드를 예시로 따지면 이 라인에 해당됨 ####
+        # find_stmt를 1로 설정하고, level을 1 감소시킨다.
         elif token_type == tokenize.DEDENT:
             find_stmt = 1
             level -= 1
 
+        # tokenize.COMMENT 토큰이 나오면, 이전 문장에 대한 주석이 있습니다. 
+        # find_stmt가 1이면, 이전 문장은 주석입니다. 
+        # stats 리스트에 주석에 대한 (행 번호, 들여쓰기 레벨) 튜플을 추가합니다. 
+        # find_stmt는 유지됩니다. - 새로운 statement를 찾아야하므로 그대로 유지
         elif token_type == tokenize.COMMENT:
             if find_stmt:
-                stats.append((sline, -1))
+                stats.append((sline, -1)) # 주석이므로 -1
                 # But we're still looking for a new stmt, so leave
                 # find_stmt alone.
-
+        
+        # tokenize.NL (New Line) 토큰은 무시합니다.
         elif token_type == tokenize.NL:
             pass
-
+        
+        # find_stmt가 1이면, 이제부터 다음 문장을 찾고 있습니다. 
+        # 이제 line이 비어 있지 않으면, 이것은 새로운 문장입니다. 
+        # stats 리스트에 (행 번호, 들여쓰기 레벨) 튜플을 추가하고 find_stmt를 0으로 설정합니다.
         elif find_stmt:
+            # 이것은 NEWLINE 다음에 오는 첫 번째 "실제 토큰"이므로 다음 프로그램 문의 첫 번째 토큰 또는 ENDMARKER여야 합니다.
             # This is the first "real token" following a NEWLINE, so it
             # must be the first token of the next program statement, or an
             # ENDMARKER.
@@ -3248,8 +3523,10 @@ def _reindent_stats(tokens):
 
     return stats
 
-
+# 이 함수는 주어진 문자열에서 앞부분에 몇 개의 공백 문자가 있는지 세는 기능을 합니다.
+# line = '    i = 0' 이 경우 4를 반환
 def _leading_space_count(line):
+    """라인에 리딩 공백의 수를 반환"""
     """Return number of leading spaces in line."""
     i = 0
     while i < len(line) and line[i] == ' ':
@@ -3257,6 +3534,10 @@ def _leading_space_count(line):
     return i
 
 
+"""
+1. lib2to3 모듈을 파이썬 2 코드를 파이썬 3코드로 자동변환
+2. 즉, 파이썬 2 코드인 source_text를 파이썬 3코드로 변환하고, 변환된 코드를 문자열로 반환
+"""
 def refactor_with_2to3(source_text, fixer_names, filename=''):
     """Use lib2to3 to refactor the source.
 
@@ -3265,6 +3546,8 @@ def refactor_with_2to3(source_text, fixer_names, filename=''):
     """
     from lib2to3.refactor import RefactoringTool
     fixers = ['lib2to3.fixes.fix_' + name for name in fixer_names]
+    
+    # refactor_with_2to3 함수 내부에서는 lib2to3 모듈의 RefactoringTool 클래스를 사용하여 파이썬 2 코드를 파이썬 3 코드로 변환합니다.
     tool = RefactoringTool(fixer_names=fixers, explicit=fixers)
 
     from lib2to3.pgen2 import tokenize as lib2to3_tokenize
@@ -3275,6 +3558,11 @@ def refactor_with_2to3(source_text, fixer_names, filename=''):
         return source_text
 
 
+"""
+Syntax 에러 있는지 체크함
+SyntaxError, TypeError, ValueError가 나면 False
+아니면 True - syntax is okay
+"""
 def check_syntax(code):
     """Return True if syntax is okay."""
     try:
@@ -3282,7 +3570,13 @@ def check_syntax(code):
     except (SyntaxError, TypeError, ValueError):
         return False
 
+"""
+정규 표현식 re의
+re.finditer()를 사용하여 패턴이 발견된 문자열을 찾은 후, 
+contents 문자열에서 문자열이 위치한 라인 번호를 찾음
 
+contents에서 pattern이 발견된 line number를 리스트로 반환
+"""
 def find_with_line_numbers(pattern, contents):
     """A wrapper around 're.finditer' to find line numbers.
 
@@ -3295,6 +3589,7 @@ def find_with_line_numbers(pattern, contents):
     end = matches[-1].start()
 
     # -1 so a failed `rfind` maps to the first line.
+    # 각 라인에서의 매칭되는 시작 위치와 해당하는 라인 번호 저장  
     newline_offsets = {
         -1: 0
     }
@@ -3304,6 +3599,10 @@ def find_with_line_numbers(pattern, contents):
             break
         newline_offsets[offset] = line_num
 
+    """
+    파일 내용에서 문자열의 매치되는 line number 반환
+    newline을 찾는데 실패해도 괜찮음, -1, 0 매핑하면 돼
+    """
     def get_line_num(match, contents):
         """Get the line number of string in a files contents.
 
@@ -3315,27 +3614,36 @@ def find_with_line_numbers(pattern, contents):
 
     return [get_line_num(match, contents) + 1 for match in matches]
 
-
+""" 
+비활성화된 범위를 나타내는 튜플 리스트을 반환한다.
+비활성화되어 있고 다시 활성화되지 않으면 나머지 파일에 대해 비활성화됨
+"""
 def get_disabled_ranges(source):
     """Returns a list of tuples representing the disabled ranges.
 
     If disabled and no re-enable will disable for rest of file.
 
     """
+    # 활성화된 line number 리스트
     enable_line_nums = find_with_line_numbers(ENABLE_REGEX, source)
+    # 비활성화된 line number 리스트
     disable_line_nums = find_with_line_numbers(DISABLE_REGEX, source)
+    # 총 line 길이
     total_lines = len(re.findall("\n", source)) + 1
 
+    # 딕셔너리 enable_commands는 key : line number, value : 활성화 여부
     enable_commands = {}
     for num in enable_line_nums:
         enable_commands[num] = True
     for num in disable_line_nums:
         enable_commands[num] = False
 
-    disabled_ranges = []
-    currently_enabled = True
+    # 다음 3개의 리스트와 변수들은 비활성화된 범위를 찾으려고 쓰임
+    disabled_ranges = [] # 비활성화 범위 저장
+    currently_enabled = True 
     disabled_start = None
 
+    # 라인 순서대로 활성화인지 비활성화인지 탐색
     for line, commanded_enabled in sorted(enable_commands.items()):
         if commanded_enabled is False and currently_enabled is True:
             disabled_start = line
@@ -3349,6 +3657,11 @@ def get_disabled_ranges(source):
 
     return disabled_ranges
 
+""" 
+행(line)이 비활성화된 범위 내에 속한다면, 함수는 False를 반환하여 해당 결과물이 필터링되도록 합니다. 
+반면, 비활성화된 범위 내에 속하지 않는다면 True를 반환하여 해당 결과물이 유지되도록 합니다
+- 비활성화 범위를 필터링하기 위함.
+"""
 
 def filter_disabled_results(result, disabled_ranges):
     """Filter out reports based on tuple of disabled ranges.
@@ -3360,21 +3673,34 @@ def filter_disabled_results(result, disabled_ranges):
             return False
     return True
 
+""" 
+pycodestyle로 부터 보고되는 문제를 검사하고 결과를 필터링한다.
+source : 검사 대상 소스 코드
+result : pycodestyle에서 보고된 결과
+aggressive : 허용도 옵션 - True일 경우에는 위험한(fixes) 수정도 허용하는 옵션
 
+필터링된 결과를 반환한다.
+"""
 def filter_results(source, results, aggressive):
     """Filter out spurious reports from pycodestyle.
 
     If aggressive is True, we allow possibly unsafe fixes (E711, E712).
 
     """
+    # 소스코드에서 독스트링을 제외한 line number들을 가져온다.
     non_docstring_string_line_numbers = multiline_string_lines(
         source, include_docstrings=False)
+    # 소스코드에서 독스트링을 포함함 line number들을 가져온다.
     all_string_line_numbers = multiline_string_lines(
         source, include_docstrings=True)
-
+    
+    # 소스코드 내에서 주석처리된 코드 line number들을 가져옴
+    # comment out code란 설명하기 위한 주석이 아닌 
+    # 코드를 동작 안시키려고 작성한 주석 "# x += 1"
     commented_out_code_line_numbers = commented_out_code_lines(source)
 
     # Filter out the disabled ranges
+    # 소스 코드 내 비활성화(disabled)된 부분을 가져와 해당 부분에 대한 보고를 필터링함
     disabled_ranges = get_disabled_ranges(source)
     if disabled_ranges:
         results = [
@@ -3384,39 +3710,53 @@ def filter_results(source, results, aggressive):
             )
         ]
 
+    # pycodestyle의 보고된 결과중 E901이 있는지 any()함수를 통해 has_e901에 True/ False 할당
     has_e901 = any(result['id'].lower() == 'e901' for result in results)
 
+    # pycodestyle의 보고된 결과를 모두 분석함
     for r in results:
         issue_id = r['id'].lower()
-
+        
+        # 보고된 라인의 에러가 독스트링을 제외한 라인인 경우, 
+        # E1xxx, E501, W191 관련 보고는 필터링합니다.
         if r['line'] in non_docstring_string_line_numbers:
             if issue_id.startswith(('e1', 'e501', 'w191')):
                 continue
-
+            
+        # e501 - line too long error 
+        # all_string_line_numbers인 경우 필터링
         if r['line'] in all_string_line_numbers:
             if issue_id in ['e501']:
                 continue
 
         # We must offset by 1 for lines that contain the trailing contents of
         # multiline strings.
+        # 여러 줄 문자열의 후행 내용을 포함하는 줄의 경우 1로 오프셋해야 함
         if not aggressive and (r['line'] + 1) in all_string_line_numbers:
             # Do not modify multiline strings in non-aggressive mode. Remove
             # trailing whitespace could break doctests.
+            
+            # non-aggressive mode에서는 여러 줄 문자열을 수정하면 안됨
+            # 후행 공백을 제거하면 doctest가 중단될 수 있습니다.
             if issue_id.startswith(('w29', 'w39')):
                 continue
-
+        
+        # aggressive <= 0이면 E711, E72x, W6x 관련 보고는 필터링합니다.
         if aggressive <= 0:
             if issue_id.startswith(('e711', 'e72', 'w6')):
                 continue
-
+        
+        # aggressive <= 1이고 E712, E713, E714 관련 보고는 필터링합니다.
         if aggressive <= 1:
             if issue_id.startswith(('e712', 'e713', 'e714')):
                 continue
-
+        
+        # aggressive <= 2이고 E704 관련 보고는 필터링합니다.
         if aggressive <= 2:
             if issue_id.startswith(('e704')):
                 continue
-
+        
+        # 보고된 라인 번호가 주석 처리된 코드에 있는 경우, E261, E262, E501 관련 보고는 필터링합니다.
         if r['line'] in commented_out_code_line_numbers:
             if issue_id.startswith(('e261', 'e262', 'e501')):
                 continue
@@ -3424,13 +3764,25 @@ def filter_results(source, results, aggressive):
         # Do not touch indentation if there is a token error caused by
         # incomplete multi-line statement. Otherwise, we risk screwing up the
         # indentation.
+        # 불완전한 다중 줄 문으로 인해 토큰 오류가 발생한 경우 들여쓰기를 누르지 마십시오. 그렇지 않으면 들여쓰기를 망칠 위험이 있습니다.
+        # 에러 코드 E901이 존재하고, 보고된 라인이 해당 코드와 관련된 경우, E1xxx, E7xxx 관련 보고는 필터링합니다.
         if has_e901:
             if issue_id.startswith(('e1', 'e7')):
                 continue
-
+        
+        # 위의 조건을 만족하지 않는 보고만 남겨두고 필터링한 결과를 반환합니다.
+        # 위의 보고들은 포매팅되지 않는 부분인듯 하다.
+        
+        # yield - 반환하는 녀석인데
+        # return과 다르게 하나씩 반환해줄 수 있음
+        # 값이 아닌 제너레이터를 반환한다는 점도 있음
         yield r
 
-
+"""
+소스코드에서 line numbers(set 자료구조)를 반환한다.
+include_docstrings를 True | False로 docstring 
+라인 번호을 포함할지 안할지 결정
+"""
 def multiline_string_lines(source, include_docstrings=False):
     """Return line numbers that are within multiline strings.
 
@@ -3442,18 +3794,22 @@ def multiline_string_lines(source, include_docstrings=False):
     line_numbers = set()
     previous_token_type = ''
     try:
-        for t in generate_tokens(source):
+        for t in generate_tokens(source): # 소스코드 토크나이징
             token_type = t[0]
             start_row = t[2][0]
             end_row = t[3][0]
 
+            # token_type이 문자열이고, 시작, 끝 행이 같지 않을 때
             if token_type == tokenize.STRING and start_row != end_row:
+                # 독스트링을 포함하고, 이전 token_type이 INDENT가 아닐 때
                 if (
                     include_docstrings or
                     previous_token_type != tokenize.INDENT
                 ):
                     # We increment by one since we want the contents of the
                     # string.
+                    # 문자열의 contents을 원하기 때문에 하나씩 증가합니다. 
+                    #   -> 여기서 알 수 있는 점, 문자열의 contents를 고려하려고 하는 듯하다.
                     line_numbers |= set(range(1 + start_row, 1 + end_row))
 
             previous_token_type = token_type
@@ -3463,6 +3819,12 @@ def multiline_string_lines(source, include_docstrings=False):
     return line_numbers
 
 
+"""
+코드일 가능성이 있는 주석의 행 번호를 반환한다. 
+코멘트 아웃 코드는 나쁜 관행이지만, 그것을 수정하는 것은 훨씬 더 혼란스럽게 할 뿐이다.
+그러므로 주석 처리된 코드를 수정하면 코드만 더 복잡해지므로 수정하지 않고 남겨두는 것이 좋다.
+따라서 코드 라인에 주석이 포함되어 있는지 확인하고, 주석의 내용이 Python 구문에 맞는지 검사해준다.
+"""
 def commented_out_code_lines(source):
     """Return line numbers of comments that are likely code.
 
@@ -3479,11 +3841,17 @@ def commented_out_code_lines(source):
             line = t[4]
 
             # Ignore inline comments.
+            # inline comments 무시함
             if not line.lstrip().startswith('#'):
                 continue
-
+            
+            # token_type이 COMMENT면
+            # '#'을 제거한 후 내용이 Python 구문에 맞는지 검사해준다.
             if token_type == tokenize.COMMENT:
+                # '#'을 제거(좌우 공백도 제거)하여 stripped_line에 할당해줌
                 stripped_line = token_string.lstrip('#').strip()
+                
+                # warnings.catch_warnings()을 활용해 SyntaxWarning 에러 무시하도록 설정
                 with warnings.catch_warnings():
                     # ignore SyntaxWarning in Python3.8+
                     # refs:
@@ -3494,14 +3862,26 @@ def commented_out_code_lines(source):
                         ' ' in stripped_line and
                         '#' not in stripped_line and
                         check_syntax(stripped_line)
-                    ):
+                    ): # 주석을 지운 코드 - stripped_line이 파이썬 코드인 겨우 line_numbers에 추가해준다.
                         line_numbers.append(start_row)
     except (SyntaxError, tokenize.TokenError):
         pass
 
     return line_numbers
 
+""" 
+긴 주석 라인을 자르거나 또는 분할하여 반환합니다.
 
+바로 뒤에 주석이 없으면 텍스트를 감싼다.
+일반적으로 모든 주석에 이 래핑을 수행하면 주석 텍스트가 들쭉날쭉해질 수 있습니다.
+
+max_line_length - 한 줄에 올 수 있는 문자열 최대길이 인데
+이거보다 크면 분할해줌.
+
+line: 분할 또는 자를 문자열
+max_line_length: 문자열의 최대 길이
+last_comment: 마지막 주석인지 여부
+"""
 def shorten_comment(line, max_line_length, last_comment=False):
     """Return trimmed or split long comment line.
 
@@ -3510,21 +3890,28 @@ def shorten_comment(line, max_line_length, last_comment=False):
     comment text.
 
     """
+    # len(line)이 max_line_length보다 크다고 가정하고 코드 진행
     assert len(line) > max_line_length
+    # 1. line의 오른쪽 공백을 제거합니다.
     line = line.rstrip()
 
     # PEP 8 recommends 72 characters for comment text.
+    # PEP 8에서 권장하는 주석 텍스트 최대 길이 : 72자. line의 들여쓰기를 포함한 최대 길이를 계산합니다.
     indentation = _get_indentation(line) + '# '
     max_line_length = min(max_line_length,
                           len(indentation) + 72)
 
+    # line이 MIN_CHARACTER_REPEAT개 이상의 같은 문자를 반복하며 끝나고, 마지막 문자가 알파벳이나 숫자가 아닌 경우, 문자열을 자릅니다.
     MIN_CHARACTER_REPEAT = 5
     if (
         len(line) - len(line.rstrip(line[-1])) >= MIN_CHARACTER_REPEAT and
         not line[-1].isalnum()
     ):
         # Trim comments that end with things like ---------
+        # -----------와 같은 것으로 끝나는 주석 잘라내기
         return line[:max_line_length] + '\n'
+    
+    # last_comment가 True이고, line이 #로 시작하고 단어가 바로 뒤에 나오는 경우, 문자열을 text wrap 합니다.
     elif last_comment and re.match(r'\s*#+\s*\w+', line):
         split_lines = textwrap.wrap(line.lstrip(' \t#'),
                                     initial_indent=indentation,
@@ -3533,10 +3920,15 @@ def shorten_comment(line, max_line_length, last_comment=False):
                                     break_long_words=False,
                                     break_on_hyphens=False)
         return '\n'.join(split_lines) + '\n'
-
+    
+    # 변경된 문자열을 반환
     return line + '\n'
 
-
+""" 
+주어진 문자열 목록에서 모든 줄 끝을 주어진 새 줄 종결자(newline)로 통일하는 함수
+각 줄의 줄 끝에 있는 '\n' 또는 '\r\n' 등의 다양한 줄 종결자를 제거한 후 
+새 줄 종결자(newline)를 각 줄 끝에 추가하여 모든 줄 끝을 통일합니다.
+"""
 def normalize_line_endings(lines, newline):
     """Return fixed line endings.
 
@@ -3548,17 +3940,31 @@ def normalize_line_endings(lines, newline):
     return line
 
 
+"""
+b문자열이 a로 시작하는지 또는 a문자열이 b로 시작하는지 여부를 반환
+True | False
+"""
 def mutual_startswith(a, b):
     return b.startswith(a) or a.startswith(b)
 
 
+""" 
+code가 ignore인지 select인지 판단
+
+code: 코드 문자열
+select: 선택할 코드 문자열 리스트
+ignore: 무시할 코드 문자열 리스트
+"""
 def code_match(code, select, ignore):
+    
+    # ignore 리스트에 있는 문자열 중 하나가 code 문자열의 부분 문자열이라면 False를 반환하고, 
     if ignore:
         assert not isinstance(ignore, str)
         for ignored_code in [c.strip() for c in ignore]:
             if mutual_startswith(code.lower(), ignored_code.lower()):
                 return False
 
+    # code 문자열 중 하나가 select 리스트의 부분 문자열이면 True를 반환
     if select:
         assert not isinstance(select, str)
         for selected_code in [c.strip() for c in select]:
@@ -3569,47 +3975,71 @@ def code_match(code, select, ignore):
     return True
 
 
+"""
+fix_code 함수는 주어진 source 코드를 PEP8 스타일에 맞게 수정하고 그 결과를 반환하는 함수
+source : 소스 코드 - str 형식이거나 encoding을 지정하여 byte string으로 지정할 수 있습니다.
+apply_config 매개변수가 True로 지정된 경우, pyproject.toml 파일에서 설정된 옵션을 사용하여 수정을 진행합니다.
+"""
 def fix_code(source, options=None, encoding=None, apply_config=False):
     """Return fixed source code.
 
     "encoding" will be used to decode "source" if it is a byte string.
 
     """
+    # get_options 함수를 사용하여 options 매개변수를 분석
     options = _get_options(options, apply_config)
+    
     # normalize
+    # options.ignore와 options.select에서 (에러코드나 경고 메세지 같은 것들)대소문자를 구분하지 않도록 정규화합니다.
     options.ignore = [opt.upper() for opt in options.ignore]
     options.select = [opt.upper() for opt in options.select]
 
     # check ignore args
     # NOTE: If W50x is not included, add W50x because the code
     #       correction result is indefinite.
+    
+    # options.ignore 매개변수는 코드에서 무시해야 하는 오류나 경고 메시지를 지정할 수 있습니다. 
+    # ignore 매개변수로 지정한 문자열과 일치하거나, 
+    # ignore 매개변수의 각 항목과 공통된 prefix를 가지는 경우, 해당 코드는 수정하지 않습니다
     ignore_opt = options.ignore
     if not {"W50", "W503", "W504"} & set(ignore_opt):
         options.ignore.append("W50")
 
+    # options.select 매개변수는 수정 대상 코드를 선택합니다. 
+    # select 매개변수에 지정한 문자열과 일치하는 코드만 수정됩니다.
     if not isinstance(source, str):
         source = source.decode(encoding or get_encoding())
 
     sio = io.StringIO(source)
+    
+    # fix_lines 함수를 사용하여 라인마다 코드 수정을 진행하고, 
+    # 수정된 코드를 반환합니다.
     return fix_lines(sio.readlines(), options=options)
 
 
+"""
+파싱되는 옵션을 반환한다.
+autopep8 -i filename.py 일 때
+-i 반환 
+"""
 def _get_options(raw_options, apply_config):
     """Return parsed options."""
-    if not raw_options:
+    
+    if not raw_options: # 기본 옵션이면 반환
         return parse_args([''], apply_config=apply_config)
 
     if isinstance(raw_options, dict):
         options = parse_args([''], apply_config=apply_config)
         for name, value in raw_options.items():
-            if not hasattr(options, name):
+            if not hasattr(options, name): # 입력한 옵션이 없으면
                 raise ValueError("No such option '{}'".format(name))
 
             # Check for very basic type errors.
+            # 매우 기본적인 타입의 에러를 검사
             expected_type = type(getattr(options, name))
             if not isinstance(expected_type, (str, )):
                 if isinstance(value, (str, )):
-                    raise ValueError(
+                    raise ValueError( #옵션이 string이 아닐 경우
                         "Option '{}' should not be a string".format(name))
             setattr(options, name, value)
     else:
@@ -3617,15 +4047,23 @@ def _get_options(raw_options, apply_config):
 
     return options
 
-
+"""
+수정된 소스 라인 반환
+source_lines : 소스 코드를 줄 단위로 나눈 리스트 
+options : 수정 옵션을 담은 객체
+filename : 수정 대상 파일의 이름
+"""
 def fix_lines(source_lines, options, filename=''):
     """Return fixed source code."""
     # Transform everything to line feed. Then change them back to original
     # before returning fixed source code.
+    
     original_newline = find_newline(source_lines)
+    # 소스 코드의 줄 바꿈 문자를 통일
     tmp_source = ''.join(normalize_line_endings(source_lines, '\n'))
 
     # Keep a history to break out of cycles.
+    # 소스 코드가 cycle에 빠지지 않도록
     previous_hashes = set()
 
     if options.line_range:
@@ -3633,12 +4071,15 @@ def fix_lines(source_lines, options, filename=''):
         fixed_source = tmp_source
     else:
         # Apply global fixes only once (for efficiency).
+        # apply_global_fixes() 함수를 통해 전역적인 수정을 적용(효율을 위해)
         fixed_source = apply_global_fixes(tmp_source,
                                           options,
                                           filename=filename)
 
     passes = 0
     long_line_ignore_cache = set()
+    
+    # previous_hashes 집합을 이용하여 소스 코드가 변하지 않을 때까지 린트 작업을 반복
     while hash(fixed_source) not in previous_hashes:
         if options.pep8_passes >= 0 and passes > options.pep8_passes:
             break
@@ -3648,35 +4089,53 @@ def fix_lines(source_lines, options, filename=''):
 
         tmp_source = copy.copy(fixed_source)
 
+        # FixPEP8 클래스의 fix() 메서드를 이용하여 소스 코드의 린트 작업을 수행
         fix = FixPEP8(
             filename,
             options,
             contents=tmp_source,
             long_line_ignore_cache=long_line_ignore_cache)
 
+        # 수정된 소스 저장
         fixed_source = fix.fix()
 
     sio = io.StringIO(fixed_source)
     return ''.join(normalize_line_endings(sio.readlines(), original_newline))
 
 
+""" 
+주어진 파일을 고쳐서 반환하거나 출력한다. 함수는 파일 이름, 옵션 및 출력을 입력 받는다.
+filename : 수정할 파일 이름
+options : 수정할 옵션
+output : 옵션이 있는 경우 수정된 소스 코드를 출력. 수정 사항이 없으면 아무것도 반환하지 않는다.
+
+"""
 def fix_file(filename, options=None, output=None, apply_config=False):
-    if not options:
+    if not options: # 수정 옵션이 없으면 parse_args를 이용해 command line을 파싱해옴
         options = parse_args([filename], apply_config=apply_config)
 
+    # original_source를 이용해 수정 파일의 코드를 한 줄씩 읽어옴
     original_source = readlines_from_file(filename)
 
     fixed_source = original_source
 
+    # in_place 또는 diff 또는 output 옵션이 있는 경우, 파일의 인코딩을 방식을 지정해준다.
+    # -d, --diff : print the diff for the fixed source
+    # -i, --in-place : make changes to files in place
     if options.in_place or options.diff or output:
         encoding = detect_encoding(filename)
 
+    # if output 매개변수를 전달한 경우,
+    # output에 파일을 인코딩하여 저장
     if output:
         output = LineEndingWrapper(wrap_output(output, encoding=encoding))
 
+    #fix_lines 함수로 파일의 라인 단위로 수정
     fixed_source = fix_lines(fixed_source, options, filename=filename)
 
-    if options.diff:
+    # -d, --diff 옵션인 경우
+    # origin code 부분과 fixed code 부분의 차이 출력
+    if options.diff: 
         new = io.StringIO(fixed_source)
         new = new.readlines()
         diff = get_diff_text(original_source, new, filename)
@@ -3686,6 +4145,9 @@ def fix_file(filename, options=None, output=None, apply_config=False):
         elif options.jobs > 1:
             diff = diff.encode(encoding)
         return diff
+    
+    # -i, --in_place 옵션
+    # 변경된 소스를 반환
     elif options.in_place:
         original = "".join(original_source).splitlines()
         fixed = fixed_source.splitlines()
@@ -3706,34 +4168,50 @@ def fix_file(filename, options=None, output=None, apply_config=False):
             output.flush()
     return fixed_source
 
-
+""" 
+전역함수을 검사함 여러 개의 (코드, 함수) 튜플을 yield 해줌
+"""
 def global_fixes():
     """Yield multiple (code, function) tuples."""
+    
     for function in list(globals().values()):
-        if inspect.isfunction(function):
-            arguments = _get_parameters(function)
+        if inspect.isfunction(function): #함수가 맞는지 검사
+            arguments = _get_parameters(function) # _get_parameters를 사용해 인자 가져옴
             if arguments[:1] != ['source']:
                 continue
 
-            code = extract_code_from_function(function)
+            code = extract_code_from_function(function) # 함수에서 코드 추출 - 함수 정의 부분을 제외한 코드 부분
             if code:
                 yield (code, function)
 
 
+# 함수의 인자 반환
 def _get_parameters(function):
     # pylint: disable=deprecated-method
     if sys.version_info.major >= 3:
         # We need to match "getargspec()", which includes "self" as the first
         # value for methods.
         # https://bugs.python.org/issue17481#msg209469
-        if inspect.ismethod(function):
+        if inspect.ismethod(function): # 메소드인지 검사
             function = function.__func__
-
-        return list(inspect.signature(function).parameters)
+            
+        # 반환된 inspect.Parameter 객체를 이용하여 매개변수의 이름, 기본값 등의 정보를 얻을 수 있습니다.
+        return list(inspect.signature(function).parameters) # getargspec(function)을 활용해 파라미터 반환
     else:
-        return inspect.getargspec(function)[0]
+        # inspect.getargspec() 함수는 함수의 매개변수 목록, 기본값, 가변 인자, 키워드 인자 등의 정보를 담은 튜플을 반환합니다.
+        return inspect.getargspec(function)[0] # getargspec를 활용해 함수의 인자 반환
 
 
+""" 
+소스 코드에 대한 글로벌 수정을 실행합니다. 
+이러한 수정 사항은 한 번만 수행하면 됩니다(pycodestyle에 의존하는 FixPEP8과는 다름)
+
+source: 교정 대상 소스 코드 문자열입니다.
+options: 명령줄 옵션과 구성 파일에서 파싱된 옵션 객체입니다.
+where: 어디서(global/local) 교정이 적용되는지를 지정하는 문자열입니다. 기본값은 'global'입니다.
+filename: 현재 처리중인 파일의 이름입니다.
+codes: 교정을 적용할 코드에 대한 목록입니다.
+"""
 def apply_global_fixes(source, options, where='global', filename='',
                        codes=None):
     """Run global fixes on source code.
@@ -3744,20 +4222,28 @@ def apply_global_fixes(source, options, where='global', filename='',
     """
     if codes is None:
         codes = []
+    
+    # E101 (indentation contains mixed spaces and tabs - 스페이스와 탭을 혼합해서 파일한 경우) 또는 
+    # E111 (indentation is not a multiple of four - 들여쓰기가 4의 배수가 아닌 경우) 코드가 옵션에 지정되어 있는 경우, 
+    # reindent() 함수를 사용하여 들여쓰기를 조정합니다.
     if any(code_match(code, select=options.select, ignore=options.ignore)
            for code in ['E101', 'E111']):
         source = reindent(
             source,
             indent_size=options.indent_size,
+            
+            # W191(indentation contains tabs - 탭으로 들여쓰기)
             leave_tabs=not (
-                code_match(
-                    'W191',
+                code_match( 
+                    'W191', 
                     select=options.select,
                     ignore=options.ignore
                 )
             )
         )
 
+    
+    # global_fixes() 함수를 사용하여 전역 교정을 적용합니다.
     for (code, function) in global_fixes():
         if code_match(code, select=options.select, ignore=options.ignore):
             if options.verbose:
@@ -3767,6 +4253,8 @@ def apply_global_fixes(source, options, where='global', filename='',
             source = function(source,
                               aggressive=options.aggressive)
 
+    # fix_2to3() 함수를 사용하여 Python 2에서 작성된 코드를 
+    # Python 3에서 실행할 수 있는 코드로 변환합니다.
     source = fix_2to3(source,
                       aggressive=options.aggressive,
                       select=options.select,
@@ -3778,15 +4266,20 @@ def apply_global_fixes(source, options, where='global', filename='',
     return source
 
 
+# 함수에서 코드 추출
 def extract_code_from_function(function):
     """Return code handled by function."""
+    
+    # fix_"로 시작하지 않는 경우 None을 반환
     if not function.__name__.startswith('fix_'):
         return None
 
+    # fix_"로 시작하지만 뒤에 숫자가 없거나 숫자 이외의 문자가 따라오는 경우에도 None을 반환합니다.
     code = re.sub('^fix_', '', function.__name__)
     if not code:
         return None
 
+    # 그 외의 경우에는 함수 이름에서 "fix_"를 제거하고 반환
     try:
         int(code[1:])
     except ValueError:
@@ -3794,11 +4287,20 @@ def extract_code_from_function(function):
 
     return code
 
-
+# pycodestyle의 버전을 문자열로 봔환
 def _get_package_version():
     packages = ["pycodestyle: {}".format(pycodestyle.__version__)]
     return ", ".join(packages)
 
+""" 
+argparse 모듈을 사용하여 커맨드 라인 인자 파싱을 위한 파서를 생성합니다. 
+argparse 모듈을 사용하면 명령행 인자를 파싱하고 해당 인자를 사용하여 
+프로그램을 실행할 수 있습니다.
+
+command-line을 파싱하여 반환
+autopep8 <option>
+autopep8 <option> filename
+"""
 
 def create_parser():
     """Return command-line parser."""
@@ -3873,10 +4375,15 @@ def create_parser():
     return parser
 
 
+""" 
+각각의 에러 코드(E/W codes)를 풀어서 개별적인 코드로 확장한 후
+
+"""
 def _expand_codes(codes, ignore_codes):
     """expand to individual E/W codes"""
     ret = set()
 
+    # codes 리스트에 있는 코드 중에서 충돌이 일어날 수 있는 코드가 모두 있는지를 확인
     is_conflict = False
     if all(
             any(
@@ -3887,9 +4394,15 @@ def _expand_codes(codes, ignore_codes):
     ):
         is_conflict = True
 
+    # ignore_codes 리스트에 
+    # W503 ( line break before binary operator )이 있으면 is_ignore_w503를 True로,
+    # W504 ( line break after binary operator ) 가 있으면 is_ignore_w504를 True로
     is_ignore_w503 = "W503" in ignore_codes
     is_ignore_w504 = "W504" in ignore_codes
 
+    # W와 관련된 에러는 
+    # indentation, white space, blank, line break, deprecation 등..
+    # W503, W504가 무시되는지 에 따라 처리할 W 관련 에러 업데이트해주고 반환
     for code in codes:
         if code == "W":
             if is_ignore_w503 and is_ignore_w504:
@@ -3910,15 +4423,30 @@ def _expand_codes(codes, ignore_codes):
 
     return ret
 
+""" 
+command-line의 옵션들을 파싱한다.
+EXIT_CODE_ARGPARSE_ERROR가 발생하면 그에 매핑되는 에러코드 출력
 
+arguments를 파싱하여 파싱한 결과를 리턴함
+apply_config가 True로 설정되면, args에 저장된 값을 
+기준으로 설정 파일을 읽어들여 추가적인 설정을 적용하게 됩니다.
+
+rgs.select는 적용할 코드 스타일을 선택할 수 있게 해주고, 
+args.ignore는 무시할 코드 스타일을 선택
+"""
 def parse_args(arguments, apply_config=False):
     """Parse command-line options."""
     parser = create_parser()
+    
+    # args.files 파일의 경로 저장
     args = parser.parse_args(arguments)
 
+    # 파일에 대한 유효성 검사
     if not args.files and not args.list_fixes:
         parser.exit(EXIT_CODE_ARGPARSE_ERROR, 'incorrect number of arguments')
 
+    
+    
     args.files = [decode_filename(name) for name in args.files]
 
     if apply_config:
@@ -3989,6 +4517,7 @@ def parse_args(arguments, apply_config=False):
             '--indent-size must be greater than 0',
         )
 
+    # 인자의 select와 ignore 구분
     if args.select:
         args.select = _expand_codes(
             _split_comma_separated(args.select),
@@ -4008,7 +4537,9 @@ def parse_args(arguments, apply_config=False):
     elif not args.select:
         if args.aggressive:
             # Enable everything by default if aggressive.
-            args.select = {'E', 'W1', 'W2', 'W3', 'W6'}
+            # aggressive인 경우 아래의 친구들도 select해줌
+            # 추가한 부분 - 김위성
+            args.select = {'E', 'W1', 'W2', 'W3', 'W6', 'W7'}
         else:
             args.ignore = _split_comma_separated(DEFAULT_IGNORE)
 
@@ -4044,16 +4575,35 @@ def parse_args(arguments, apply_config=False):
 
     return args
 
+""" 
+Python 프로그램에서 커맨드 라인 옵션과 구성 파일에 대한 입력을 사용하여 일반적으로 설정 파일로부터 가져오는 설정 값을 정규화
+args : argparse 모듈로부터 생성된 argument 객체입니다. 파싱된 command-line 인자 값이 들어있는 객체입니다.
+config : configparser 모듈로부터 생성된 config 객체입니다. ini 파일 형식의 설정 파일을 파싱하여 생성한 객체입니다.
+section : 파싱하려는 설정 파일의 섹션 이름입니다.
+option_list : 파싱하려는 옵션 목록입니다.
 
+설정 파일의 [tool.autopep8] 
+섹션에 --max-line-length=79 옵션이 있고, option_list에 해당 옵션이 존재하면, 
+이 함수는 튜플 ('max_line_length', '--max-line-length', 79)를 반환
+"""
 def _get_normalize_options(args, config, section, option_list):
+    # 첫 번째 요소는 옵션의 정규화된 이름, 
+    # 두 번째 요소는 옵션 이름, 
+    # 세 번째 요소는 정규화된 값
+    
     for (k, v) in config.items(section):
-        norm_opt = k.lstrip('-').replace('-', '_')
+        # --max-line-length -> max_line_length
+        norm_opt = k.lstrip('-').replace('-', '_') 
         if not option_list.get(norm_opt):
             continue
+        
+        
         opt_type = option_list[norm_opt]
+        # 옵션의 타입 검사
         if opt_type is int:
             if v.strip() == "auto":
                 # skip to special case
+                # 특별한 auto인경우
                 if args.verbose:
                     print(f"ignore config: {k}={v}")
                 continue
@@ -4063,6 +4613,9 @@ def _get_normalize_options(args, config, section, option_list):
         else:
             value = config.get(section, k)
         yield norm_opt, k, value
+
+
+#1000라인 끝##############################################################################################################
 
 
 def read_config(args, parser):
@@ -4575,6 +5128,7 @@ def get_encoding():
 
 def main(argv=None, apply_config=True):
     """Command-line entry."""
+    # symtable
     if argv is None:
         argv = sys.argv
 
@@ -4628,7 +5182,6 @@ def main(argv=None, apply_config=True):
     except KeyboardInterrupt:
         return EXIT_CODE_ERROR  # pragma: no cover
 
-
 class CachedTokenizer(object):
 
     """A one-element cache around tokenize.generate_tokens().
@@ -4658,3 +5211,4 @@ generate_tokens = _cached_tokenizer.generate_tokens
 
 if __name__ == '__main__':
     sys.exit(main())
+
