@@ -1456,19 +1456,33 @@ def run_once(func):
 
 
 class Customize:
+    """
+    custom.txt에서 읽어온 사용자의 커스터마이징 정보를 토대로
+    사용자가 원하는 커스터마이징 값을 반환하는 함수
+    """
+    
+    # 사용자가 설정한 속성과 값을 저장하는 딕셔너리
+    __custom_dict = {}
+    
     # 추가한 부분 - 이선호
     # custom.txt 파일을 읽어와서 딕셔너리로 반환, 한번만 실행
     @run_once
-    def parse_user_customize():
+    @staticmethod
+    def __parse_user_customize__(self):
         # 사용자의 커스텀 정보를 저장할 딕셔너리
-        custom_dic = {}
         custome_line = readlines_from_file('custom.txt')
         for custom_row in custome_line:
             attribute, value = custom_row.rstrip().split(':')
-            custom_dic[attribute] = value
-            
-        return custom_dic
-
+            Customize.__custom_dic[attribute] = value
+    
+    # 추가한 부분 - 이선호
+    # 수정이 요구되는 속성의 값을 반환
+    @staticmethod
+    def get_attribute(self, attribute_name):
+        if attribute_name not in Customize.__custom_dict:
+            return None
+        return Customize.__custom_dict[attribute_name]
+    
 
 def get_module_imports_on_top_of_file(source, import_line_index):
     """return import or from keyword position
