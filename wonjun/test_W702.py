@@ -12,6 +12,7 @@ def snakeCaseb():
 def snakecasec():
     return None
 
+# 추가로 고려해봐야 할 케이스
 def Snake_Cased():
     return None
 
