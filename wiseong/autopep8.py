@@ -1450,14 +1450,8 @@ class FixPEP8(object):
         target = self.source[line_index]
         offset = result['column'] - 1
         
-        end_index = target.index(":")
-        class_name = target[offset:end_index]
-        
-        # 상속받는 자식 클래스인 경우
-        if '(' in class_name:
-            class_name = class_name[0 : class_name.index("(")]
-            
-        class_name = class_name.strip()
+        # 함수 이름을 추출하는 메소드로 변경
+        class_name = extract_class_name(target)
         
         fix_class_name = to_capitalized_words(class_name)
         
@@ -1552,6 +1546,14 @@ def camel_to_snake(camel_case):
     """
     snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
     return snake_case
+
+# 추가한 부분 - 클래스 이름 추출
+def extract_class_name(code):
+    pattern = r"class\s+(\w+)(?:\([^)]+\))?"
+    match = re.search(pattern, code)
+    if match:
+        return match.group(1)
+    return None
 
 
 # 추가한 부분 - 김위성
