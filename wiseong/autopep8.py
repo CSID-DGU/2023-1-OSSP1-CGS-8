@@ -1624,7 +1624,6 @@ def analyze_file(file_path):
 
     return identifiers
 
-
 def get_module_imports_on_top_of_file(source, import_line_index):
     """return import or from keyword position
 
@@ -4028,6 +4027,14 @@ def fix_file(filename, options=None, output=None, apply_config=False):
     if not options: # 수정 옵션이 없으면 parse_args를 이용해 command line을 파싱해옴
         options = parse_args([filename], apply_config=apply_config)
 
+    # 추가한 부분 - 김위성 - aggressive 3레벨 이상이거나 experimental 옵션일 경우
+    # input 파일 포함, import하고 있는 파일들의 식별자까지 모두 가져옴
+    if options and (options.aggressive >= 3 or options.experimental):
+        global all_origin_identifiers 
+        
+        project_path = get_project_path()
+        all_origin_identifiers = find_all_identifiers(project_path, filename)
+        
     # original_source를 이용해 수정 파일의 코드를 한 줄씩 읽어옴
     original_source = readlines_from_file(filename)
 
