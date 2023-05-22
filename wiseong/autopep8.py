@@ -1448,15 +1448,12 @@ class FixPEP8(object):
         """fix class name"""
         line_index = result['line'] - 1
         target = self.source[line_index]
-        offset = result['column'] - 1
         
         # 함수 이름을 추출하는 메소드로 변경
         class_name = extract_class_name(target)
         
         fix_class_name = to_capitalized_words(class_name)
         
-        # 1. 이중 for문은 아니지만 for문 두 번 돌아야 함 -> 더 효율적인 방법?
-        # 2. 단일 파일에서 실행된다고 가정
         if is_vaild_name(fix_class_name, self.source):
             for i, s in enumerate(self.source):
                 self.source[i] = s.replace(class_name, fix_class_name)
@@ -1468,16 +1465,8 @@ class FixPEP8(object):
         """fix function name"""
         line_index = result['line'] - 1
         target = self.source[line_index]
-        offset = result['column'] - 1
         
-        end_index = target.index("(")
-        function_name = target[offset:end_index]
-        
-        # def Exam1 (): 일 경우.
-        # 공백 수정 후 호출되는 것이면 굳이 필요없다.
-        # 하지만 customize해서 공백을 제거안했다면 필요하다
-        #   -> 이때는 필요한 코드
-        function_name = function_name.strip()
+        function_name = extract_function_name(target)
         
         fix_function_name = camel_to_snake(function_name)
         
@@ -1555,164 +1544,13 @@ def extract_class_name(code):
         return match.group(1)
     return None
 
-
-# 추가한 부분 - 김위성
-# 해결해야 할 부분
-# - FixPEP8과 상속 문제
-# - fix(), _fix_source()
-# class NamingConvention:
-    
-#     def __init__(self, filename,
-#                  options,
-#                  contents=None,
-#                  long_line_ignore_cache=None):
-#         self.filename = filename
-#         if contents is None:
-#             self.source = readlines_from_file(filename)
-#         else:
-#             sio = io.StringIO(contents)
-#             self.source = sio.readlines()
-#         self.options = options
-#         self.indent_word = _get_indentword(''.join(self.source))
-        
-#         # collect imports line
-#         self.imports = {}
-#         for i, line in enumerate(self.source):
-#             if (line.find("import ") == 0 or line.find("from ") == 0) and \
-#                     line not in self.imports:
-#                 # collect only import statements that first appeared
-#                 self.imports[line] = i
-
-#         self.long_line_ignore_cache = (
-#             set() if long_line_ignore_cache is None
-#             else long_line_ignore_cache)
-        
-#         # option이 aggressive 3레벨 일 경우 또는 experimental에만 실행
-#         if options and (options.aggressive >= 3 or options.experimental):
-#             self.fix_w701 = self.fix_w705
-        
-#         if options and (options.aggressive >= 3 or options.experimental):
-#             self.fix_w702 = self.fix_w707
-        
-#         # self.fix_w701 = self.fix_w705 
-#         # self.fix_w702 = self.fix_w707
-
-#     def fix_w705(self, result):
-#         """fix class name"""
-#         line_index = result['line'] - 1
-#         target = self.source[line_index]
-#         offset = result['column'] - 1
-#         end_index = target.index(":")
-        
-#         class_name = target[offset:end_index]
-        
-#         # 상속받는 자식 클래스인 경우
-#         if '(' in class_name:
-#             class_name = class_name[0 : class_name.index("(")]
-        
-#         class_name = class_name.strip()
-        
-#         fix_class_name = self.to_capitalized_words(class_name)
-        
-#         # 1. 이중 for문은 아니지만 for문 두 번 돌아야 함 -> 더 효율적인 방법?
-#         # 2. 단일 파일에서 실행된다고 가정
-#         if self.is_vaild_name(fix_class_name):
-#             for i, s in enumerate(self.source):
-#                 self.source[i] = s.replace(class_name, fix_class_name)
-        
-#         return None #return 필요 없음, 아래 메소드와 구분 지으려고 잠시 두는 용도
-
-#     def fix_w707(self, result):
-#         """fix function name"""
-#         line_index = result['line'] - 1
-#         target = self.source[line_index]
-#         offset = result['column'] - 1
-        
-#         end_index = target.index(":")
-#         function_name = target[offset:end_index]
-        
-#         # def Exam1 (): 일 경우.
-#         # 공백 수정 후 호출되는 것이면 굳이 필요없다.
-#         # - customize해서 공백을 제거 안했다면 필요한 코드
-#         function_name = function_name.strip()
-        
-#         fix_function_name = self.camel_to_snake(function_name)
-        
-#         if self.is_vaild_name(fix_function_name):
-#             for i, s in enumerate(self.source):
-#                 self.source[i] = s.replace(function_name, fix_function_name)
-        
-#         return None #return 필요 없음, 아래 메소드와 구분 지으려고 잠시 두는 용도
-    
-#     def is_vaild_name(self, name):
-#         """이름 변경 가능 여부 판별"""
-        
-#         # 변경하려는 이름이 키워드인 경우
-#         if keyword.iskeyword(name): return False
-#         # 변경하려는 이름이 파일내에 존재
-#         for s in self.source:
-#             if name in s:
-#                 return False
-#         return True
-    
-#     def is_snake_case(word):
-#         if not word:
-#             return False
-
-#         if not word[0].islower():
-#             return False
-
-#         if not all(char.islower() or char == '_' for char in word):
-#             return False
-
-#         if '__' in word:
-#             return False
-
-#         if word in keyword.kwlist:
-#             return False
-        
-#         return True
-    
-#     def is_camel_case(word):
-#         if not word:
-#             return False
-
-#         if ' ' in word:
-#             return False
-
-#         if '_' in word:
-#             return False
-
-#         if word[0].isupper():
-#             return False
-
-#         if any(w[0].isupper() for w in word.split()):
-#             return False
-
-#         return True
-    
-#     def to_capitalized_words(self, word):
-#         """return capitalized words
-        
-#         class naming convention
-#         """
-#         if self.is_snake_case(word): return string.capwords(word, sep='_').replace('_', '') 
-#         return word[0].upper() + word[1:]
-
-#     def snake_to_capwords(self, snake_case):
-#         """return capwords"""
-#         if self.is_snake_case(snake_case): return snake_case
-#         capitalized_words = string.capwords(snake_case, sep='_').replace('_', '')
-#         return capitalized_words
-        
-#     def camel_to_snake(self, camel_case):
-#         """return snake case
-        
-#         method naming convention
-#         """
-#         if not self.is_camel_case(camel_case): return camel_case.lower()
-#         snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
-#         return snake_case
+# 추가한 부분 - 함수 이름 추출
+def extract_function_name(code):
+    pattern = r"def\s+(\w+)\s*\("
+    match = re.search(pattern, code)
+    if match:
+        return match.group(1)
+    return None
 
 
 def get_module_imports_on_top_of_file(source, import_line_index):
