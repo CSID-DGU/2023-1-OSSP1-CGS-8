@@ -1,3 +1,5 @@
+import operator
+
 def _get_indentation(line):
     """Return leading whitespace."""
     if line.strip():
@@ -5,6 +7,41 @@ def _get_indentation(line):
         return line[:non_whitespace_index]
 
     return ''
+
+# 추가한 부분 - 이선호
+# 이항 연산자인지 확인
+def is_binary_operator(char):
+    binary_operators = [
+        "+", "-", "*", "/", "%", "**", "//", "==", "!=", ">", "<", ">=", "<=",
+        "and", "or", "in", "not in", "is", "is not"
+    ]
+    
+    return char in binary_operators or getattr(operator, char, None) is not None
+
+# 추가한 부분 - 이선호
+# 단항 연산자인지 확인
+def is_unary_operator(char):
+    unary_operators = [
+        "+", "-", "~", "not"
+    ]
+    
+    return char in unary_operators or getattr(operator, char + " ", None) is not None
+
+# 추가한 부분 - 이선호
+# 현재 줄에 열린 괄호 개수 반환
+def count_open_bracket(line):
+    open_bracket = line.count('(')\
+        + line.count('{')\
+        + line.count('[')
+    return open_bracket
+
+# 추가한 부분 - 이선호
+# 현재 줄에 닫힌 괄호 개수 반환
+def count_close_bracket(line):
+    close_bracket = line.count(')')\
+        + line.count('}')\
+        + line.count(']')
+    return close_bracket
     
 def fix_test(self, result):
     line_index = result['line'] - 1
@@ -16,13 +53,8 @@ def fix_test(self, result):
     open_bracket, close_bracket = 0, 0
     while line_index >= 0:
         current_line = self.source[line_index]
-        
-        open_bracket += current_line.count('(')\
-            + current_line.count('{')\
-            + current_line.count('[')
-        close_bracket += current_line.count(')')\
-            + current_line.count('}')\
-            + current_line.count(']')
+        open_bracket += count_open_bracket(current_line)
+        close_bracket += count_close_bracket(current_line)
         
         if (line_index-1 >= 0 and
                 self.source[line_index-1][-1] == chr(92)):
@@ -59,4 +91,10 @@ b = 1,2,3 # 5
 a = [ # 6
     1,2,3 # 7
 ] # 8
+
+,가 단순히 이항 연산자라고 생각해서 위쪽 라인으로 올리면 안됨
+아래와 같은 반례가 존재
+
+a = 4,5,6, # ,로 끝나는 경우 튜플로 처리
+b = 5,6,7, # 주석2
 '''
