@@ -518,10 +518,6 @@ class FixPEP8(object):
         self.fix_e703 = self.fix_e702
         self.fix_w292 = self.fix_w291
         self.fix_w293 = self.fix_w291
-        # 추가한 부분 - 이선호
-        # customize argument가 존재할 경우 custom.txt 분석
-        if self.options.customize:
-            self.comstom_dict = parse_user_customize()
 
     def _fix_source(self, results):
         try:
@@ -1468,20 +1464,27 @@ class Customize:
     # custom.txt 파일을 읽어와서 딕셔너리로 반환, 한번만 실행
     @run_once
     @staticmethod
-    def __parse_user_customize__(self):
+    def parse_user_customize():
         # 사용자의 커스텀 정보를 저장할 딕셔너리
-        custome_line = readlines_from_file('custom.txt')
-        for custom_row in custome_line:
-            attribute, value = custom_row.rstrip().split(':')
-            Customize.__custom_dic[attribute] = value
+        custom_line = readlines_from_file('custom.txt')
+        for line in custom_line:
+            key, value = line.split(':')
+            Customize.__custom_dict[key.strip()] = value.strip()
+                
     
     # 추가한 부분 - 이선호
     # 수정이 요구되는 속성의 값을 반환
     @staticmethod
-    def get_attribute(self, attribute_name):
-        if attribute_name not in Customize.__custom_dict:
-            return None
-        return Customize.__custom_dict[attribute_name]
+    def get_attribute(attribute_name):
+        return Customize.__custom_dict.get(attribute_name)
+    
+    
+    # 추가한 부분 - 이선호
+    # 사용자가 설정한 커스텀 값을 출력
+    @staticmethod
+    def print_custom_dict():
+        for key, value in Customize.__custom_dict.items():
+            print(key, ':', value)
     
 
 def get_module_imports_on_top_of_file(source, import_line_index):
@@ -3880,7 +3883,7 @@ def parse_args(arguments, apply_config=False):
 
     if not args.files and not args.list_fixes:
         parser.exit(EXIT_CODE_ARGPARSE_ERROR, 'incorrect number of arguments')
-
+        
     args.files = [decode_filename(name) for name in args.files]
 
     if apply_config:
@@ -3894,6 +3897,19 @@ def parse_args(arguments, apply_config=False):
             parser = parser_with_pyproject_toml
         args = parser.parse_args(arguments)
         args.files = [decode_filename(name) for name in args.files]
+        
+    # 추가한 부분 - 이선호
+    # customize argument를 발견하면 customize.txt 파일을 읽어온다.
+    if args.customize:
+        Customize.parse_user_customize()
+        if Customize.get_attribute('max_line_length'):
+            try:
+                max_line_length = int(Customize.get_attribute('max_line_length'))
+                if max_line_length > 0:
+                    args.max_line_length = max_line_length
+                    print(args.max_line_length)
+            except(ValueError):
+                pass
 
     if '-' in args.files:
         if len(args.files) > 1:
