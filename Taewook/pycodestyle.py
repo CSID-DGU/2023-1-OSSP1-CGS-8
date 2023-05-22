@@ -1494,9 +1494,9 @@ def ambiguous_identifier(logical_line, tokens):
     Okay: L = 0
     Okay: o = 123
     Okay: i = 42
-    E741: l = 0
-    E741: O = 123
-    E741: I = 42
+    W741: l = 0
+    W741: O = 123
+    W741: I = 42
 
     Variables can be bound in several other contexts, including class
     and function definitions, lambda functions, 'global' and 'nonlocal'
@@ -1512,21 +1512,21 @@ def ambiguous_identifier(logical_line, tokens):
     Okay: lambda a=l[I:5]: None
     Okay: lambda x=a.I: None
     Okay: if l >= 12:
-    E741: except AttributeError as O:
-    E741: with lock as l:
-    E741: global I
-    E741: nonlocal l
-    E741: def foo(l):
-    E741: def foo(l=12):
-    E741: l = foo(l=12)
-    E741: for l in range(10):
-    E741: [l for l in lines if l]
-    E741: lambda l: None
-    E741: lambda a=x[1:5], l: None
-    E741: lambda **l:
-    E741: def f(**l):
-    E742: class I(object):
-    E743: def l(x):
+    W741: except AttributeError as O:
+    W741: with lock as l:
+    W741: global I
+    W741: nonlocal l
+    W741: def foo(l):
+    W741: def foo(l=12):
+    W741: l = foo(l=12)
+    W741: for l in range(10):
+    W741: [l for l in lines if l]
+    W741: lambda l: None
+    W741: lambda a=x[1:5], l: None
+    W741: lambda **l:
+    W741: def f(**l):
+    W742: class I(object):
+    W743: def l(x):
     """
     func_depth = None  # set to brace depth if 'def' or 'lambda' is found
     seen_colon = False  # set to true if we're done with function parameters
@@ -1574,12 +1574,12 @@ def ambiguous_identifier(logical_line, tokens):
             pos = start
         if prev_text == 'class':
             if text in idents_to_avoid:
-                yield start, "E742 ambiguous class definition '%s'" % text
+                yield start, "W742 ambiguous class definition '%s'" % text
         if prev_text == 'def':
             if text in idents_to_avoid:
-                yield start, "E743 ambiguous function definition '%s'" % text
+                yield start, "W743 ambiguous function definition '%s'" % text
         if ident:
-            yield pos, "E741 ambiguous variable name '%s'" % ident
+            yield pos, "W741 ambiguous variable name '%s'" % ident
         prev_text = text
         prev_start = start
 
@@ -1752,8 +1752,8 @@ def is_snakecase(word):
     if not all(char.islower() or char == '_' for char in word):
         return False
     
-    # 함수가 던더메서드인 경우
-    if '__' in word:
+    # 함수가 던더메서드가 아닌 경우
+    if not '__' in word:
         return False
     
     return True
