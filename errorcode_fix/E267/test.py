@@ -49,3 +49,14 @@ self.source = ['    if (a and b and', '        c.getResult(1 + 2 + 3\\',
 
 fix_test(self, result)
 print('\n'.join(self.source))
+
+'''
+a = [1,2,3, # 1
+     4,5,6, # 2
+     7,8,9, # 3
+     10,11,12] # 4
+b = 1,2,3 # 5
+a = [ # 6
+    1,2,3 # 7
+] # 8
+'''
