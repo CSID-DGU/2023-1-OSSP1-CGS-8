@@ -166,6 +166,8 @@ PROJECT_CONFIG = ('setup.cfg', 'tox.ini', '.pep8', '.flake8')
 
 MAX_PYTHON_FILE_DETECTION_BYTES = 1024
 
+# 추가한 부분 - 김위성 - 프로젝트 내에서 input파일과 import하고 있는 파일들의 identifiers
+all_origin_identifiers = None
 
 def open_with_encoding(filename, mode='r', encoding=None, limit_byte_check=-1):
     """Return opened file with a specific encoding."""
@@ -518,7 +520,7 @@ class FixPEP8(object):
         self.fix_w293 = self.fix_w291
         
         # 추가한 부분 김위성
-        # 작명 컨벤션 aggressive 3레벨 일 경우에만 실행
+        # 작명 컨벤션 aggressive 3레벨 일 경우와 experimental일 경우에만 실행
         if options and (options.aggressive >= 3 or options.experimental):
             self.fix_w701 = self.fix_w705
         
@@ -1444,46 +1446,38 @@ class FixPEP8(object):
         
     # 추가한 부분 (작명 컨벤션 - 클래스 이름) - 김위성
     def fix_w705(self, result):
-        
         """fix class name"""
         line_index = result['line'] - 1
         target = self.source[line_index]
         
-        # 함수 이름을 추출하는 메소드로 변경
         class_name = extract_class_name(target)
         
         fix_class_name = to_capitalized_words(class_name)
         
-        if is_vaild_name(fix_class_name, self.source):
+        if is_vaild_name(fix_class_name):
             for i, s in enumerate(self.source):
                 self.source[i] = s.replace(class_name, fix_class_name)
-        
-        return None #return 필요 없음, 아래 메소드와 구분 지으려고 잠시 두는 용도
 
     # 추가한 부분 (작명 컨벤션 - 함수)- 김위성
     def fix_w707(self, result):
         """fix function name"""
         line_index = result['line'] - 1
         target = self.source[line_index]
-        
+
         function_name = extract_function_name(target)
         
         fix_function_name = camel_to_snake(function_name)
         
-        if is_vaild_name(fix_function_name, self.source):
+        if is_vaild_name(fix_function_name):
             for i, s in enumerate(self.source):
                 self.source[i] = s.replace(function_name, fix_function_name)
-        
-        return None #return 필요 없음, 아래 메소드와 구분 지으려고 잠시 두는 용도
 
 
 # 추가한 부분 - 김위성
 # is_vaild_name 메소드를 클래스 내부로 넣을지 말지
-def is_vaild_name(name, source):
+def is_vaild_name(name):
     if keyword.iskeyword(name): return False
-    for s in source:
-        if name in s:
-            return False
+    if name in all_origin_identifiers: return False
     return True
 
 def is_snake_case(word):
