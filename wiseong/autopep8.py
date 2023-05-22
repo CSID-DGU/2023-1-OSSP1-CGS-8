@@ -168,6 +168,8 @@ MAX_PYTHON_FILE_DETECTION_BYTES = 1024
 
 # 추가한 부분 - 김위성 - 프로젝트 내에서 input파일과 import하고 있는 파일들의 identifiers
 all_origin_identifiers = None
+# 추가한 부분 - 김위성 - 다른 파일에서 참조되고 있는지
+all_origin_referenced = None
 
 def open_with_encoding(filename, mode='r', encoding=None, limit_byte_check=-1):
     """Return opened file with a specific encoding."""
@@ -1454,7 +1456,7 @@ class FixPEP8(object):
         
         fix_class_name = to_capitalized_words(class_name)
         
-        if is_vaild_name(fix_class_name):
+        if is_vaild_name(class_name, fix_class_name):
             for i, line in enumerate(self.source):
                 self.source[i] = update_line(line, class_name, fix_class_name)
 
@@ -1468,16 +1470,25 @@ class FixPEP8(object):
         
         fix_function_name = camel_to_snake(function_name)
         
-        if is_vaild_name(fix_function_name):
+        if is_vaild_name(function_name, fix_function_name):
             for i, line in enumerate(self.source):
                 self.source[i] = update_line(line, function_name, fix_function_name)
 
 
 # 추가한 부분 - 김위성
-# is_vaild_name 메소드를 클래스 내부로 넣을지 말지
-def is_vaild_name(name):
-    if keyword.iskeyword(name): return False
-    if name in all_origin_identifiers: return False
+def is_vaild_name(origin_name, fixed_name):
+    # 변경할 이름이 키워드 인 경우
+    if keyword.iskeyword(fixed_name): 
+        return False
+    
+    # 변경할 이름이 이미 사용되고 있는 경우
+    if fixed_name in all_origin_identifiers: 
+        return False
+    
+    # 본래 이름이 다른 파일에서 참조되고 있는 경우
+    if origin_name in all_origin_referenced: 
+        return False
+    
     return True
 
 def is_snake_case(word):
@@ -1552,13 +1563,13 @@ def get_project_path():
     project_path = os.path.dirname(os.path.dirname(script_path))
     return project_path
 
-# 추가한 부분 - 김위성 - import 하고 있는 파일과 해당 파일의 모든 식별자
+# 추가한 부분 - 김위성 - import 하고 있는 파일과 해당 파일의 모든 식별자와 참조되는 식별자
 def find_all_identifiers(project_path, target_file):
     identifiers = set()
+    referenced = set()
     
     # Collect identifiers from target file
-    target_identifiers = analyze_file(target_file)
-    
+    target_identifiers, target_referenced = analyze_file(target_file)
     identifiers.update(target_identifiers)
     
     # Find importing files
@@ -1566,10 +1577,11 @@ def find_all_identifiers(project_path, target_file):
     
     # Collect identifiers from importing files
     for file_path in importing_files:
-        file_identifiers = analyze_file(file_path)
+        file_identifiers, file_referenced = analyze_file(file_path)
         identifiers.update(file_identifiers)
+        referenced.update(file_referenced)
     
-    return identifiers
+    return identifiers, referenced
 
 # 추가한 부분 - 김위성 - import하고 있는 파일
 def find_importing_files(project_path, target_file):
@@ -1604,16 +1616,21 @@ def is_file_imported(file_path, target_file):
 
     return False
 
-# 추가한 부분 - 김위성 - 식별자를 모두 저장
+# 추가한 부분 - 김위성 - 식별자, 참조되는 식별자를 모두 저장
 def analyze_file(file_path):
     with open(file_path, 'r') as file:
         source_code = file.read()
     
     tree = ast.parse(source_code)
     identifiers = set()
+    referenecd = set()
 
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef):
+            # import하는 파일에서 상속하는 클래스
+            for base in node.bases:
+                if isinstance(base, ast.Name):
+                    referenecd.add(base.id)
             identifiers.add(node.name)
         elif isinstance(node, ast.FunctionDef):
             identifiers.add(node.name)
@@ -1621,8 +1638,11 @@ def analyze_file(file_path):
             identifiers.add(node.id)
         elif isinstance(node, ast.arg):
             identifiers.add(node.arg)
+        # import하는 파일에서 호출하는 함수
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            referenecd.add(node.func.id)
 
-    return identifiers
+    return identifiers, referenecd
 
 # 추가한 부분 - 주석 부분 처리
 def update_line(line, old_name, new_name):
@@ -4051,9 +4071,9 @@ def fix_file(filename, options=None, output=None, apply_config=False):
     # input 파일 포함, import하고 있는 파일들의 식별자까지 모두 가져옴
     if options and (options.aggressive >= 3 or options.experimental):
         global all_origin_identifiers 
-        
+        global all_origin_referenced
         project_path = get_project_path()
-        all_origin_identifiers = find_all_identifiers(project_path, filename)
+        all_origin_identifiers, all_origin_referenced = find_all_identifiers(project_path, filename)
         
     # original_source를 이용해 수정 파일의 코드를 한 줄씩 읽어옴
     original_source = readlines_from_file(filename)
