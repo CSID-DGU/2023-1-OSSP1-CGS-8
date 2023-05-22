@@ -23,6 +23,14 @@ $ pip install --upgrade autopep8
 $ autopep8 --in-place --aggressive --aggressive <filename>
 ```
 
+모듈로 사용
+```sh
+>>> import autopep8
+>>> autopep8.fix_code('print( 123 )\n',
+...                   options={'ignore': ['E']})
+'print( 123 )\n'
+```
+
 ## 정보
  – 김위성 [@github](https://github.com/kimwiseong) – @dgu.ac.kr <br/>
  – 김태욱 [@github](https://github.com/Taew00k) – @dgu.ac.kr <br/>
