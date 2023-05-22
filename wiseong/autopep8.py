@@ -1546,6 +1546,13 @@ def extract_function_name(code):
         return match.group(1)
     return None
 
+# 추가한 부분 - 김위성 - 프로젝트의 경로
+def get_project_path():
+    script_path = os.path.abspath(__file__)
+    project_path = os.path.dirname(os.path.dirname(script_path))
+    return project_path
+
+
 
 def get_module_imports_on_top_of_file(source, import_line_index):
     """return import or from keyword position
