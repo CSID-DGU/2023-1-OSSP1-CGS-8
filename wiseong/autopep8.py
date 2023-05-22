@@ -1474,7 +1474,6 @@ class FixPEP8(object):
             for i, line in enumerate(self.source):
                 self.source[i] = update_line(line, function_name, fix_function_name)
 
-
 # 추가한 부분 - 김위성
 def is_vaild_name(origin_name, fixed_name):
     # 변경할 이름이 키워드 인 경우
