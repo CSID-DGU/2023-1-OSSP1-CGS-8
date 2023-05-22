@@ -1724,8 +1724,8 @@ def is_capwords(word):
     if not word[0].isupper():
         return False
     
-    # 대문자로 시작하는 단어가 있는 경우
-    if any(w[0].isupper() for w in word.split()):
+    # 두 번째 문자부터 단어 끝까지 소문자가 아닌 경우
+    if not word[1:].islower():
         return False
 
     return True
