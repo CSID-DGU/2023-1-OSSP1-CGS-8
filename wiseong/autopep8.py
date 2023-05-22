@@ -1521,7 +1521,7 @@ def snake_to_capwords(snake_case):
     if is_snake_case(snake_case): return snake_case
     capitalized_words = string.capwords(snake_case, sep='_').replace('_', '')
     return capitalized_words
-    
+
 def camel_to_snake(camel_case):
     """return snake case
     
