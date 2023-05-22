@@ -1503,29 +1503,25 @@ def is_vaild_name(name, source):
             return False
     return True
 
-# 수정
+# 수정 - 조원준
 def is_snake_case(word):
     if not word[0].islower():
         return False
     if not all(char.islower() or char == '_' for char in word):
         return False
-    if '__' in word:
+    if '__' in word:    # 던더
         return False
     if word in keyword.kwlist:
         return False
     
     return True
 
-# 수정
-# 카멜 케이스 로직을 다시 생각해봐야 할 것 같음
+# 수정 - 조원준
 def is_camel_case(word):
     if '_' in word:
         return False
     if word[0].isupper():
         return False
-    # 아래 if 문의 존재이유가 없음.
-    # if any(w[0].isupper() for w in word.split()):
-    #     return False
     return True
 
 def to_capitalized_words(word):
