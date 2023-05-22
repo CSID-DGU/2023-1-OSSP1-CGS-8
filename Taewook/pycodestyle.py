@@ -1715,17 +1715,13 @@ def python_3000_async_await_keywords(logical_line, tokens):
 
 # 추가한 부분 - 김태욱/ class name
 def is_capwords(word):
-    
+      
     # 밑줄이 포함된 경우
     if '_' in word:
         return False
 
     # 첫 번째 문자가 대문자가 아닌 경우
     if not word[0].isupper():
-        return False
-    
-    # 두 번째 문자부터 단어 끝까지 소문자가 아닌 경우
-    if not word[1:].islower():
         return False
 
     return True
@@ -1744,18 +1740,20 @@ def class_name_convention(logical_line, tokens):
 # 추가한 부분 - 김태욱 / function name
 def is_snakecase(word):
     
-    # 첫 번째 문자가 소문자가 아닌 경우
-    if not word[0].islower():
-        return False
-    
-    # 모든 문자가 소문자이거나 '_'가 아닌 경우
+# 모든 문자가 소문자이거나 '_'가 아닌 경우
     if not all(char.islower() or char == '_' for char in word):
         return False
     
-    # 함수가 던더메서드가 아닌 경우
-    if not '__' in word:
-        return False
-    
+    # 던더메서드가 아닌데 함수명에 '__'가 있는 경우
+    if '__' in word:
+        if not (word.startswith("__") and word.endswith("__")):
+            return False
+ 
+    # 던더메서드가 아닌데 첫번째 문자가 소문자가 아닌 경우
+    if not word[0].islower():
+        if not (word.startswith("__") and word.endswith("__")):
+            return False
+
     return True
     
 @register_check
