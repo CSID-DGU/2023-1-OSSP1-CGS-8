@@ -1457,6 +1457,7 @@ class FixPEP8(object):
                 self.source[i] = update_line(line, class_name, fix_class_name)
 
     # 추가한 부분 (작명 컨벤션 - 함수)- 김위성
+    # 수정
     def fix_w707(self, result):
         """fix function name"""
         line_index = result['line'] - 1
@@ -1464,7 +1465,12 @@ class FixPEP8(object):
 
         function_name = extract_function_name(target)
         
-        fix_function_name = camel_to_snake(function_name)
+        if is_camel_case(function_name):
+            fix_function_name = camel_to_snake(function_name)
+        elif is_cap_word(function_name):
+            fix_function_name = capwords_to_snake(function_name)
+        else:
+            fix_function_name = function_name
         
         if is_valid_name(fix_function_name):
             for i, line in enumerate(self.source):
@@ -1475,9 +1481,7 @@ class FixPEP8(object):
 # is_valid_name 메소드를 클래스 내부로 넣을지 말지
 def is_valid_name(name):
     if keyword.iskeyword(name): return False
-    # for s in source:
-    #     if name in s:
-    #         return False
+    # if name in all_origin_identifiers: return False
     return True
 
 # 수정 - 조원준
@@ -1493,6 +1497,14 @@ def is_snake_case(word):
     
     return True
 
+# 추가
+def is_cap_word(word):
+    if '_' in word:
+        return False
+    if not word[0].isupper():
+        return False
+    return True
+    
 # 수정 - 조원준
 def is_camel_case(word):
     if '_' in word:
@@ -1515,7 +1527,7 @@ def snake_to_capwords(snake_case):
     if is_snake_case(snake_case): return snake_case
     capitalized_words = string.capwords(snake_case, sep='_').replace('_', '')
     return capitalized_words
-    
+
 # 수정 - 조원준
 def camel_to_snake(camel_case):
     """return snake case
@@ -1524,6 +1536,18 @@ def camel_to_snake(camel_case):
     """
     snake_case = camel_case
     if is_camel_case(camel_case):   
+        snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
+    return snake_case
+
+# 추가
+def capwords_to_snake(cap_word):
+    """return snake case
+    
+    method naming convention
+    """
+    snake_case = cap_word
+    if is_cap_word(cap_word):
+        camel_case = cap_word[0].lower() + cap_word[1:]
         snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
     return snake_case
 
