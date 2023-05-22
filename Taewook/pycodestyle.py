@@ -1740,7 +1740,7 @@ def class_name_convention(logical_line, tokens):
 # 추가한 부분 - 김태욱 / function name
 def is_snakecase(word):
     
-# 모든 문자가 소문자이거나 '_'가 아닌 경우
+    # 모든 문자가 소문자이거나 '_'가 아닌 경우
     if not all(char.islower() or char == '_' for char in word):
         return False
     
