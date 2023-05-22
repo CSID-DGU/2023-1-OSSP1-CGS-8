@@ -1539,12 +1539,15 @@ def snake_to_capwords(snake_case):
     capitalized_words = string.capwords(snake_case, sep='_').replace('_', '')
     return capitalized_words
     
+# 수정 - 조원준
 def camel_to_snake(camel_case):
     """return snake case
     
     method naming convention
     """
-    snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
+    snake_case = camel_case
+    if is_camel_case(camel_case):   
+        snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
     return snake_case
 
 
