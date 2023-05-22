@@ -1552,6 +1552,77 @@ def get_project_path():
     project_path = os.path.dirname(os.path.dirname(script_path))
     return project_path
 
+# 추가한 부분 - 김위성 - import 하고 있는 파일과 해당 파일의 모든 식별자
+def find_all_identifiers(project_path, target_file):
+    identifiers = set()
+    
+    # Collect identifiers from target file
+    target_identifiers = analyze_file(target_file)
+    
+    identifiers.update(target_identifiers)
+    
+    # Find importing files
+    importing_files = find_importing_files(project_path, target_file)
+    
+    # Collect identifiers from importing files
+    for file_path in importing_files:
+        file_identifiers = analyze_file(file_path)
+        identifiers.update(file_identifiers)
+    
+    return identifiers
+
+# 추가한 부분 - 김위성 - import하고 있는 파일
+def find_importing_files(project_path, target_file):
+    target_file_name = os.path.splitext(os.path.basename(target_file))[0]
+    importing_files = []
+    
+    for root, dirs, files in os.walk(project_path):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            if file_name.endswith('.py') and file_path != target_file:
+                if is_file_imported(file_path, target_file_name):
+                    importing_files.append(file_path)
+    
+    return importing_files
+
+# 추가한 부분 - 김위성 - 프로젝트내의 어떤 파일이 input파일을 import하는지 여부 
+def is_file_imported(file_path, target_file):
+    with open(file_path, 'r') as file:
+        source_code = file.read()
+
+    tree = ast.parse(source_code)
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                imported_module = alias.name
+                if target_file == imported_module or '.' + target_file in imported_module:
+                    return True
+        elif isinstance(node, ast.ImportFrom):
+            if node.module == target_file or '.' + target_file in node.module:
+                return True
+
+    return False
+
+# 추가한 부분 - 김위성 - 식별자를 모두 저장
+def analyze_file(file_path):
+    with open(file_path, 'r') as file:
+        source_code = file.read()
+    
+    tree = ast.parse(source_code)
+    identifiers = set()
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            identifiers.add(node.name)
+        elif isinstance(node, ast.FunctionDef):
+            identifiers.add(node.name)
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            identifiers.add(node.id)
+        elif isinstance(node, ast.arg):
+            identifiers.add(node.arg)
+
+    return identifiers
 
 
 def get_module_imports_on_top_of_file(source, import_line_index):
