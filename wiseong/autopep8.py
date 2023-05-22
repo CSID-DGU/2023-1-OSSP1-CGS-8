@@ -1455,8 +1455,8 @@ class FixPEP8(object):
         fix_class_name = to_capitalized_words(class_name)
         
         if is_vaild_name(fix_class_name):
-            for i, s in enumerate(self.source):
-                self.source[i] = s.replace(class_name, fix_class_name)
+            for i, line in enumerate(self.source):
+                self.source[i] = update_line(line, class_name, fix_class_name)
 
     # 추가한 부분 (작명 컨벤션 - 함수)- 김위성
     def fix_w707(self, result):
@@ -1469,8 +1469,8 @@ class FixPEP8(object):
         fix_function_name = camel_to_snake(function_name)
         
         if is_vaild_name(fix_function_name):
-            for i, s in enumerate(self.source):
-                self.source[i] = s.replace(function_name, fix_function_name)
+            for i, line in enumerate(self.source):
+                self.source[i] = update_line(line, function_name, fix_function_name)
 
 
 # 추가한 부분 - 김위성
@@ -1623,6 +1623,27 @@ def analyze_file(file_path):
             identifiers.add(node.arg)
 
     return identifiers
+
+# 추가한 부분 - 주석 부분 처리
+def update_line(line, old_name, new_name):
+    try:
+        comment = ''
+        if line.startswith("#") or line.startswith("'''") or line.startswith('"""'):
+            return line
+        
+        tokens = generate_tokens(line)
+        for token in tokens:
+            token_type = token.type
+            token_string = token.string
+
+            if token_type == tokenize.COMMENT or token_string.startswith("'''") or token_string.startswith('"""'):
+                comment = token_string
+                return line.replace(comment, '').replace(old_name, new_name).replace('\n','') + comment + '\n'
+    
+        return line.replace(comment, '').replace(old_name, new_name)
+    except tokenize.TokenError:
+        return line
+
 
 def get_module_imports_on_top_of_file(source, import_line_index):
     """return import or from keyword position
@@ -4021,7 +4042,6 @@ def fix_lines(source_lines, options, filename=''):
 filename : 수정할 파일 이름
 options : 수정할 옵션
 output : 옵션이 있는 경우 수정된 소스 코드를 출력. 수정 사항이 없으면 아무것도 반환하지 않는다.
-
 """
 def fix_file(filename, options=None, output=None, apply_config=False):
     if not options: # 수정 옵션이 없으면 parse_args를 이용해 command line을 파싱해옴
