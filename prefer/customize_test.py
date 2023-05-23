@@ -629,6 +629,11 @@ class FixPEP8(object):
 
         """
         num_indent_spaces = int(result['info'].split()[1])
+        # 추가한 부분 - 이선호
+        # 들여쓰기 커스텀 값이 존재하면 해당 값으로 변경
+        if self.options.customize and Customize.get_attribute('indent_level'):
+            indent_level = int(Customize.get_attribute('indent_level'))
+            num_indent_spaces = (num_indent_spaces//4)*indent_level
         line_index = result['line'] - 1
         target = self.source[line_index]
 
@@ -683,6 +688,11 @@ class FixPEP8(object):
     def fix_e125(self, result):
         """Fix indentation undistinguish from the next logical line."""
         num_indent_spaces = int(result['info'].split()[1])
+        # 추가한 부분 - 이선호
+        # 들여쓰기 커스텀 값이 존재하면 해당 값으로 변경
+        if self.options.customize and Customize.get_attribute('indent_level'):
+            indent_level = int(Customize.get_attribute('indent_level'))
+            num_indent_spaces = (num_indent_spaces//4)*indent_level
         line_index = result['line'] - 1
         target = self.source[line_index]
 
@@ -701,6 +711,11 @@ class FixPEP8(object):
     def fix_e131(self, result):
         """Fix indentation undistinguish from the next logical line."""
         num_indent_spaces = int(result['info'].split()[1])
+        # 추가한 부분 - 이선호
+        # 들여쓰기 커스텀 값이 존재하면 해당 값으로 변경
+        if self.options.customize and Customize.get_attribute('indent_level'):
+            indent_level = int(Customize.get_attribute('indent_level'))
+            num_indent_spaces = (num_indent_spaces//4)*indent_level
         line_index = result['line'] - 1
         target = self.source[line_index]
 
@@ -1480,6 +1495,13 @@ class Customize:
     
     
     # 추가한 부분 - 이선호
+    # custom 파일을 제대로 읽어왔는지 여부 반환
+    @staticmethod
+    def use_customize():
+        return True if Customize.__custom_dict else False
+    
+    
+    # 추가한 부분 - 이선호
     # 사용자가 설정한 커스텀 값을 출력
     @staticmethod
     def print_custom_dict():
@@ -1854,6 +1876,10 @@ def _get_indentword(source):
                 break
     except (SyntaxError, tokenize.TokenError):
         pass
+    # 추가한 부분 - 이선호
+    # indent_level 값에 따른 기본적인 들여쓰기 크기 지정
+    if Customize.use_customize() and Customize.get_attribute('indent_level'):
+        indent_word = ' ' * int(Customize.get_attribute('indent_level'))
     return indent_word
 
 
@@ -3833,7 +3859,7 @@ def create_parser():
     # customize argument를 추가한다. -c나 --customize를 사용하여 이용 가능하다.
     parser.add_argument('-c', '--customize', action='store_true',
                         help='Replace the formatting level'
-                        'with the value you set in custom.txt.')
+                        ' with the value you set in custom.txt.')
 
     return parser
 
@@ -3907,7 +3933,17 @@ def parse_args(arguments, apply_config=False):
                 max_line_length = int(Customize.get_attribute('max_line_length'))
                 if max_line_length > 0:
                     args.max_line_length = max_line_length
-                    print(args.max_line_length)
+            except(ValueError):
+                pass
+          
+        # 기본적인 들여쓰기 크기를 사용자 설정값으로 지정    
+        if Customize.get_attribute('indent_level'):
+            try:
+                indent_level = int(Customize.get_attribute('indent_level'))
+                if indent_level > 0:
+                    args.indent_size = indent_level
+                    global DEFAULT_INDENT_SIZE
+                    DEFAULT_INDENT_SIZE = indent_level
             except(ValueError):
                 pass
 

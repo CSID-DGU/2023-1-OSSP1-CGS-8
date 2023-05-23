@@ -1,5 +1,5 @@
 max_line_length:100
-indent_level:4
+indent_level:1
 list_bracket_style:0
 binary_newline_style:0
 string_quote_style:0
