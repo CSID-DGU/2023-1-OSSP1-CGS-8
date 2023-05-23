@@ -3946,6 +3946,19 @@ def parse_args(arguments, apply_config=False):
                     DEFAULT_INDENT_SIZE = indent_level
             except(ValueError):
                 pass
+        
+        # 이항 연산자 줄바꿈 스타일 설정
+        if Customize.get_attribute('binary_newline_style'):
+            try:
+                style = int(Customize.get_attribute('binary_newline_style'))
+                if args.ignore != '':
+                    args.ignore += ','
+                if style == 0:
+                    args.ignore += 'W503'
+                else:
+                    args.ignore += 'W504'
+            except(ValueError):
+                pass
 
     if '-' in args.files:
         if len(args.files) > 1:
