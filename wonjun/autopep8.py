@@ -1563,6 +1563,30 @@ def capwords_to_snake(cap_word):
         snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
     return snake_case
 
+# 추가 - 조원준
+# 함수명이 mixed word로 쓰였을 때 snake_case로 변경
+def mixed_to_snake(mixed_word):
+    """return snake case
+
+    method naming convention
+    """    
+    u_list = mixed_word.split('_')
+    lower_list = [u_list[0].lower()] + [word.lower() for word in u_list[1:]]
+    snake_case = '_'.join(lower_list)
+    return snake_case
+
+# 추가 - 조원준
+# 클래스명이 mixed word로 작성되었을 때 CapWords로 변경
+def mixed_to_capwords(mixed_word):
+    """return snake case
+
+    method naming convention
+    """
+    u_list = mixed_word.split('_')
+    upper_list = [u_list[0][0].upper() + u_list[0][1:]] + [word.capitalize() for word in u_list[1:]]
+    capwords = ''.join(upper_list)
+    return capwords
+
 # 추가한 부분 - 클래스 이름 추출
 def extract_class_name(code):
     pattern = r"class\s+(\w+)(?:\([^)]+\))?"
