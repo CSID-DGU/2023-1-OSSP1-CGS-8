@@ -43,7 +43,7 @@ def count_close_bracket(line):
         + line.count(']')
     return close_bracket
     
-def fix_test(self, result):
+def fix_test1(self, result):
     line_index = result['line'] - 1
     target = self.source[line_index]
     offset = result['column']- 1
@@ -70,6 +70,19 @@ def fix_test(self, result):
     indent_word = _get_indentation(self.source[line_index])
     comment = indent_word + comment + '\n'
     self.source[line_index] = comment + self.source[line_index]
+    
+def fix_test2(self, result):
+    line_index = result['line'] - 1
+    target = self.source[line_index]
+    offset = result['column']- 1
+    comment = target[offset:].strip()
+    self.source[line_index] = target[:offset].rstrip()
+        
+    # 암시적 줄 잇기가 시작되는 줄의 들여쓰기와 인라인 주석의
+    # 들여쓰기 수준 맞추기
+    indent_word = _get_indentation(self.source[line_index])
+    comment = indent_word + comment + '\n'
+    self.source[line_index] = comment + self.source[line_index]
 
 
 result = {}
@@ -79,22 +92,52 @@ def self(): pass
 self.source = ['    if (a and b and', '        c.getResult(1 + 2 + 3\\',
                '            + 4 + 5 + 6\\', '                + 7) == 10): #이런이런 함수']
 
-fix_test(self, result)
+fix_test2(self, result)
 print('\n'.join(self.source))
 
 '''
 a = [1,2,3, # 1
      4,5,6, # 2
      7,8,9, # 3
-     10,11,12] # 4
-b = 1,2,3 # 5
-a = [ # 6
-    1,2,3 # 7
-] # 8
+     10,11,12 # 4
+     13,14,15] # 5
+if (a and b and # 6
+    c.getResult(1 + 2 + 3\ # 7
+        + 4 + 5 + 6\ # 8
+            + 7) == 10) # 9
+b = 1,2,3, # 10
+c = 1,2,3, # 11
+d = 1,2,3, # 12
+1,2,3 # 13
+
+a = [1,2,3, # 1
+     4,5,6, # 2
+     7,8,9, # 3
+     10,11,12 # 4
+     13,14,15] # 5
+c = 1,2,3, # 11
+d = 1,2,3, # 12
+
+# 1
+# 2
+# 3
+# 4
+#5
+a = [1,2,3,
+     4,5,6,
+     7,8,9,
+     10,11,12
+     13,14,15]
+# 11
+c = 1,2,3,
+# 12
+d = 1,2,3,
+
 
 ,가 단순히 이항 연산자라고 생각해서 위쪽 라인으로 올리면 안됨
 아래와 같은 반례가 존재
 
 a = 4,5,6, # ,로 끝나는 경우 튜플로 처리
 b = 5,6,7, # 주석2
+
 '''
