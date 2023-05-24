@@ -1457,7 +1457,7 @@ class FixPEP8(object):
                 self.source[i] = update_line(line, class_name, fix_class_name)
 
     # 추가한 부분 (작명 컨벤션 - 함수)- 김위성
-    # 수정
+    # 수정 - 조원준
     def fix_w707(self, result):
         """fix function name"""
         line_index = result['line'] - 1
@@ -1497,7 +1497,8 @@ def is_snake_case(word):
     
     return True
 
-# 추가
+# 추가 - 조원준
+# CapWords인지 확인
 def is_cap_word(word):
     if '_' in word:
         return False
@@ -1506,6 +1507,7 @@ def is_cap_word(word):
     return True
     
 # 수정 - 조원준
+# CapWords는 아니지만 camel case인지 확인
 def is_camel_case(word):
     if '_' in word:
         return False
@@ -1513,6 +1515,16 @@ def is_camel_case(word):
         return False
     return True
 
+# 추가 - 조원준
+# mixed_word임을 판별
+def is_mixed_word(word):
+    if '_' not in word:
+        return False
+    if all(char.islower() or char == '_' for char in word):
+        return False
+    return True
+
+# snake case를 CapWords로 변경
 def to_capitalized_words(word):
     """return capitalized words
     
@@ -1539,7 +1551,7 @@ def camel_to_snake(camel_case):
         snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
     return snake_case
 
-# 추가
+# 추가 - 조원준
 def capwords_to_snake(cap_word):
     """return snake case
     
