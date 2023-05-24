@@ -1455,7 +1455,8 @@ class FixPEP8(object):
         class_name = extract_class_name(target)
         
         fix_class_name = to_capitalized_words(class_name)
-        
+        print(all_origin_referenced)
+        print(all_origin_identifiers)
         if is_vaild_name(class_name, fix_class_name):
             for i, line in enumerate(self.source):
                 self.source[i] = update_line(line, class_name, fix_class_name)
@@ -1568,7 +1569,7 @@ def find_all_identifiers(project_path, target_file):
     referenced = set()
     
     # Collect identifiers from target file
-    target_identifiers, target_referenced = analyze_file(target_file)
+    target_identifiers = analyze_file(target_file)
     identifiers.update(target_identifiers)
     
     # Find importing files
@@ -1576,8 +1577,7 @@ def find_all_identifiers(project_path, target_file):
     
     # Collect identifiers from importing files
     for file_path in importing_files:
-        file_identifiers, file_referenced = analyze_file(file_path)
-        identifiers.update(file_identifiers)
+        file_referenced = analyze_file(file_path)
         referenced.update(file_referenced)
     
     return identifiers, referenced
@@ -1626,14 +1626,13 @@ def analyze_file(file_path):
     
     tree = ast.parse(source_code)
     identifiers = set()
-    referenecd = set()
 
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef):
             # import하는 파일에서 상속하는 클래스
             for base in node.bases:
                 if isinstance(base, ast.Name):
-                    referenecd.add(base.id)
+                    identifiers.add(base.id)
             identifiers.add(node.name)
         elif isinstance(node, ast.FunctionDef):
             identifiers.add(node.name)
@@ -1643,9 +1642,9 @@ def analyze_file(file_path):
             identifiers.add(node.arg)
         # import하는 파일에서 호출하는 함수
         elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-            referenecd.add(node.func.id)
+            identifiers.add(node.func.id)
 
-    return identifiers, referenecd
+    return identifiers
 
 # 추가한 부분 - 주석 부분 처리
 def update_line(line, old_name, new_name):
@@ -1700,11 +1699,12 @@ def get_import_paths(project_path, file_path):
 
     for import_path in import_paths:
         library_path = get_library_path(import_path)
-        if library_path.startswith(project_path):
+        if project_path in library_path:
+        # if library_path.startswith(project_path):
             library_paths.append(library_path)
         
     return library_paths
-    
+
 
 def get_module_imports_on_top_of_file(source, import_line_index):
     """return import or from keyword position
