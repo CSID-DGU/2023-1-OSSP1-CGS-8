@@ -1441,16 +1441,17 @@ class FixPEP8(object):
                                                                  self.source)
         self.source[line_index] = '{}\\{}'.format(
             target[:offset + 1], target[offset + 1:])
-        
+    
     # 추가한 부분 (작명 컨벤션 - 클래스 이름) - 김위성
     def fix_w705(self, result):
         """fix class name"""
         line_index = result['line'] - 1
         target = self.source[line_index]
-        
         class_name = extract_class_name(target)
         
         fix_class_name = to_capitalized_words(class_name)
+        if is_mixed_word(class_name):
+            fix_class_name = mixed_to_capwords(class_name)
         
         if is_valid_name(fix_class_name):
             for i, line in enumerate(self.source):
@@ -1469,8 +1470,10 @@ class FixPEP8(object):
             fix_function_name = camel_to_snake(function_name)
         elif is_cap_word(function_name):
             fix_function_name = capwords_to_snake(function_name)
+        elif is_mixed_word(function_name):
+            fix_function_name = mixed_to_snake(function_name)
         else:
-            fix_function_name = function_name
+            fix_function_name = function_name(function_name)
         
         if is_valid_name(fix_function_name):
             for i, line in enumerate(self.source):
@@ -1530,13 +1533,15 @@ def to_capitalized_words(word):
     
     class naming convention
     """
-    if is_snake_case(word): return string.capwords(word, sep='_').replace('_', '') 
+    if is_snake_case(word): 
+        return string.capwords(word, sep='_').replace('_', '') 
     
     return word[0].upper() + word[1:]
 
 def snake_to_capwords(snake_case):
     """return capwords"""
-    if is_snake_case(snake_case): return snake_case
+    if is_snake_case(snake_case): 
+        return snake_case
     capitalized_words = string.capwords(snake_case, sep='_').replace('_', '')
     return capitalized_words
 
