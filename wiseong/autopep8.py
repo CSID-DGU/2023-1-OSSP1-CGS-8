@@ -1455,8 +1455,7 @@ class FixPEP8(object):
         class_name = extract_class_name(target)
         
         fix_class_name = to_capitalized_words(class_name)
-        print(all_origin_referenced)
-        print(all_origin_identifiers)
+        
         if is_vaild_name(class_name, fix_class_name):
             for i, line in enumerate(self.source):
                 self.source[i] = update_line(line, class_name, fix_class_name)
@@ -1475,6 +1474,7 @@ class FixPEP8(object):
             for i, line in enumerate(self.source):
                 self.source[i] = update_line(line, function_name, fix_function_name)
 
+
 # 추가한 부분 - 김위성
 def is_vaild_name(origin_name, fixed_name):
     # 변경할 이름이 키워드 인 경우
@@ -1491,6 +1491,7 @@ def is_vaild_name(origin_name, fixed_name):
     
     return True
 
+
 def is_snake_case(word):
     if not word:
         return False
@@ -1505,6 +1506,7 @@ def is_snake_case(word):
     
     return True
 
+
 def is_camel_case(word):
     if not word:
         return False
@@ -1518,6 +1520,7 @@ def is_camel_case(word):
         return False
     return True
 
+
 def to_capitalized_words(word):
     """return capitalized words
     
@@ -1527,11 +1530,13 @@ def to_capitalized_words(word):
     
     return word[0].upper() + word[1:]
 
+
 def snake_to_capwords(snake_case):
     """return capwords"""
     if is_snake_case(snake_case): return snake_case
     capitalized_words = string.capwords(snake_case, sep='_').replace('_', '')
     return capitalized_words
+
 
 def camel_to_snake(camel_case):
     """return snake case
@@ -1541,6 +1546,7 @@ def camel_to_snake(camel_case):
     snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
     return snake_case
 
+
 # 추가한 부분 - 클래스 이름 추출
 def extract_class_name(code):
     pattern = r"class\s+(\w+)(?:\([^)]+\))?"
@@ -1548,6 +1554,7 @@ def extract_class_name(code):
     if match:
         return match.group(1)
     return None
+
 
 # 추가한 부분 - 함수 이름 추출
 def extract_function_name(code):
@@ -1557,11 +1564,13 @@ def extract_function_name(code):
         return match.group(1)
     return None
 
+
 # 추가한 부분 - 김위성 - 프로젝트의 경로
 def get_project_path():
     script_path = os.path.abspath(__file__)
     project_path = os.path.dirname(os.path.dirname(script_path))
     return project_path
+
 
 # 추가한 부분 - 김위성 - import 하고 있는 파일과 해당 파일의 모든 식별자와 참조되는 식별자
 def find_all_identifiers(project_path, target_file):
@@ -1582,6 +1591,7 @@ def find_all_identifiers(project_path, target_file):
     
     return identifiers, referenced
 
+
 # 추가한 부분 - 김위성 - import하고 있는 파일
 def find_importing_files(project_path, target_file):
     target_file_name = os.path.splitext(os.path.basename(target_file))[0]
@@ -1599,6 +1609,7 @@ def find_importing_files(project_path, target_file):
     import_path = get_import_paths(project_path, target_file)
     importing_files.extend(import_path)
     return importing_files
+
 
 # 추가한 부분 - 김위성 - 프로젝트내의 어떤 파일이 input파일을 import하는지 여부 
 def is_file_imported(file_path, target_file):
@@ -1618,6 +1629,7 @@ def is_file_imported(file_path, target_file):
                 return True
 
     return False
+
 
 # 추가한 부분 - 김위성 - 식별자, 참조되는 식별자를 모두 저장
 def analyze_file(file_path):
@@ -1646,6 +1658,7 @@ def analyze_file(file_path):
 
     return identifiers
 
+
 # 추가한 부분 - 주석 부분 처리
 def update_line(line, old_name, new_name):
     try:
@@ -1666,20 +1679,26 @@ def update_line(line, old_name, new_name):
     except tokenize.TokenError:
         return line
 
+
 # 추가한 부분 - import하는 파일의 경로
-def get_library_path(library_name):
+def get_library_path(project_path, library_name):
     library_path = None
 
-    for path in sys.path:
-        library_file = library_name + '.py'
-        potential_path = os.path.join(path, library_file)
-        if os.path.isfile(potential_path):
-            library_path = potential_path
+    for root, _, files in os.walk(project_path):
+        for file in files:
+            if file.endswith('.py'):
+                file_path = os.path.join(root, file)
+                if library_name + '.py' in file_path:
+                    library_path = file_path
+                    break
+        
+        if library_path is not None:
             break
 
     return library_path
 
-# 추가한 부분 - import하는 파일
+
+# 추가한 부분 - import하는 파일, import되는 파일
 def get_import_paths(project_path, file_path):
     with open(file_path, 'r') as file:
         source_code = file.read()
@@ -1692,15 +1711,21 @@ def get_import_paths(project_path, file_path):
         if isinstance(node, ast.Import):
             for alias in node.names:
                 import_paths.append(alias.name)
+
         elif isinstance(node, ast.ImportFrom):
             module_name = node.module if node.module else ''
-            for alias in node.names:
-                import_paths.append(f"{module_name}.{alias.name}")
+            import_paths.append(module_name)
 
+                
     for import_path in import_paths:
-        library_path = get_library_path(import_path)
-        if project_path in library_path:
-        # if library_path.startswith(project_path):
+        if "." in import_path:
+            import_path = import_path.split('.')[-1]
+
+        library_path = get_library_path(project_path, import_path)
+        
+        if library_path is None: continue
+        if library_path.startswith(project_path):
+
             library_paths.append(library_path)
         
     return library_paths
