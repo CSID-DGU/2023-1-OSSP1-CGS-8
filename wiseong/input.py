@@ -1,7 +1,7 @@
 # from import_input import *
 import import_input
 
-class computer_engineer(import_input.person):
+class computer_engineer(import_input.person): #computer_engineer
     def __init__(self, name, age, job):
         self.job = job
         super().__init__(name, age)  
