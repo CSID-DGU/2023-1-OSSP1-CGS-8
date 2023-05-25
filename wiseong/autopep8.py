@@ -1596,11 +1596,12 @@ def find_all_identifiers(project_path, target_file):
 def find_importing_files(project_path, target_file):
     target_file_name = os.path.splitext(os.path.basename(target_file))[0]
     importing_files = []
+    target_file_path = get_file_path(project_path, target_file)
     
     for root, dirs, files in os.walk(project_path):
         for file_name in files:
             file_path = os.path.join(root, file_name)
-            if file_name.endswith('.py') and file_path != target_file:
+            if file_name.endswith('.py') and file_path != target_file_path:
                 # iuput 파일이 import되고 있는 경우
                 if is_file_imported(file_path, target_file_name): 
                     importing_files.append(file_path)
@@ -1729,6 +1730,16 @@ def get_import_paths(project_path, file_path):
             library_paths.append(library_path)
         
     return library_paths
+
+# 추가한 부분 - input 파일의 경로를 가져온다.
+def get_file_path(project_path, file_name):
+    for root, _, files in os.walk(project_path):
+        for file in files:
+            if file == file_name:
+                return os.path.join(root, file)
+
+    return None
+
 
 
 def get_module_imports_on_top_of_file(source, import_line_index):
