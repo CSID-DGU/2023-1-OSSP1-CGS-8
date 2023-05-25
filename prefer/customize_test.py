@@ -636,7 +636,17 @@ class FixPEP8(object):
             num_indent_spaces = (num_indent_spaces//4)*indent_level
         line_index = result['line'] - 1
         target = self.source[line_index]
-
+        
+        # 추가한 부분 - 이선호
+        # 리스트 닫는 괄호 스타일 설정 추가
+        if (target.lstrip()[0] in ')}]' and Customize.use_customize()
+            and Customize.get_attribute('list_bracket_style')):
+            try:
+                list_bracket_style = int(Customize.get_attribute('list_bracket_style'))
+                if list_bracket_style == 0:
+                    num_indent_spaces = len(_get_indentation(self.source[line_index-1]))
+            except(ValueError):
+                pass
         self.source[line_index] = ' ' * num_indent_spaces + target.lstrip()
 
     def fix_e112(self, result):
