@@ -1793,7 +1793,7 @@ def docstring_single_quote(logical_line, tokens):
     prev_end = (0,0)
     for token_type, text, start, end, line in tokens:
         if token_type == tokenize.STRING and (text.startswith("'''") or text.endswith("'''")):
-            yield (start, "E744 string is expressed in double quotes")
+            yield (start, "E745 docstring is expressed in double quotes")
         elif token_type != tokenize.STRING:
             prev_end = end
 
