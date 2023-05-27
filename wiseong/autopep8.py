@@ -4297,6 +4297,16 @@ def fix_file(filename, options=None, output=None, apply_config=False):
     # 추가한 부분 - 김위성 - aggressive 3레벨 이상이거나 experimental 옵션일 경우
     # input 파일 포함, import하고 있는 파일들의 식별자까지 모두 가져옴
     if options and (options.aggressive >= 3 or options.experimental):
+        
+        # 추가한 부분 - 경고 메세지 (수정 필요)
+        command = input("계속하시겠습니까? [Y / N] : ")
+        
+        if command.upper() == 'N':
+            sys.exit()
+        if len(command) > 1:
+            print('잘못 입력하였습니다.')
+            sys.exit()
+            
         global all_origin_identifiers 
         global all_origin_referenced
         project_path = get_project_path()
