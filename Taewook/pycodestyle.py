@@ -939,7 +939,7 @@ def missing_whitespace_around_operator(logical_line, tokens):
                     need_space = None
             elif text in WS_OPTIONAL_OPERATORS:
                 need_space = None
-
+            
             if need_space is None:
                 # Surrounding space is optional, but ensure that
                 # trailing space matches opening space
@@ -1765,6 +1765,36 @@ def func_name_convention(logical_line, tokens):
             if not_recommand_func_name:
                 yield (start, "W702 function name is recommended snake_case")
         elif token_type != tokenize.NL:
+            prev_end = end
+            
+# 추가한 부분 - 하지은 / use double quotes in a string
+def is_double_quote(word):
+    
+    #맨 앞이 ' 인 경우
+    if word[0] == "\'":
+        return False
+    
+    return True
+    
+@register_check
+def string_single_quote(logical_line, tokens):
+    prev_end = (0,0)
+    for token_type, text, start, end, line in tokens:
+        if token_type == tokenize.STRING:
+            not_recommend_single_quote = line[:start[1]].strip()
+            if not_recommend_single_quote:
+                yield (start, "E744 string is expressed in double quotes")
+        elif token_type != tokenize.STRING:
+            prev_end = end
+            
+# 추가한 부분 - 김태욱 / use double quotes in a docstring
+@register_check
+def docstring_single_quote(logical_line, tokens):
+    prev_end = (0,0)
+    for token_type, text, start, end, line in tokens:
+        if token_type == tokenize.STRING and (text.startswith("'''") or text.endswith("'''")):
+            yield (start, "E744 string is expressed in double quotes")
+        elif token_type != tokenize.STRING:
             prev_end = end
 
 ########################################################################
