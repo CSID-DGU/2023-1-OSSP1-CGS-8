@@ -89,6 +89,7 @@ from configparser import ConfigParser as SafeConfigParser, Error
 import pycodestyle
 from pycodestyle import STARTSWITH_INDENT_STATEMENT_REGEX
 
+import libcst as cst #pip install libcst
 
 __version__ = '2.0.2'
 
@@ -1453,12 +1454,15 @@ class FixPEP8(object):
         target = self.source[line_index]
         
         class_name = extract_class_name(target)
-        
         fix_class_name = to_capitalized_words(class_name)
         
+        # 수정한 부분 - 김위성 
         if is_vaild_name(class_name, fix_class_name):
-            for i, line in enumerate(self.source):
-                self.source[i] = update_line(line, class_name, fix_class_name)
+            origin_source = ''.join(self.source)
+            self.source = modify_class_name(origin_source, class_name, fix_class_name)
+        # if is_vaild_name(class_name, fix_class_name):
+        #     for i, line in enumerate(self.source):
+        #         self.source[i] = update_line(line, class_name, fix_class_name)
 
     # 추가한 부분 (작명 컨벤션 - 함수)- 김위성
     def fix_w707(self, result):
@@ -1467,12 +1471,16 @@ class FixPEP8(object):
         target = self.source[line_index]
 
         function_name = extract_function_name(target)
-        
         fix_function_name = camel_to_snake(function_name)
         
+        # 수정한 부분 - 김위성
         if is_vaild_name(function_name, fix_function_name):
-            for i, line in enumerate(self.source):
-                self.source[i] = update_line(line, function_name, fix_function_name)
+            origin_source = ''.join(self.source)
+            self.source = modify_function_name(origin_source, function_name, fix_function_name)
+        
+        # if is_vaild_name(function_name, fix_function_name):
+        #     for i, line in enumerate(self.source):
+        #         self.source[i] = update_line(line, function_name, fix_function_name)
 
 
 # 추가한 부분 - 김위성
@@ -1659,7 +1667,7 @@ def analyze_file(file_path):
     return identifiers
 
 
-# 추가한 부분 - 주석 부분 처리
+# 추가한 부분 - 김위성 - 주석 부분 처리
 def update_line(line, old_name, new_name):
     try:
         comment = ''
@@ -1680,7 +1688,7 @@ def update_line(line, old_name, new_name):
         return line
 
 
-# 추가한 부분 - import하는 파일의 경로
+# 추가한 부분 - 김위성 - import하는 파일의 경로
 def get_library_path(project_path, library_name):
     library_path = None
 
@@ -1698,7 +1706,7 @@ def get_library_path(project_path, library_name):
     return library_path
 
 
-# 추가한 부분 - import하는 파일, import되는 파일
+# 추가한 부분 - 김위성 - import하는 파일, import되는 파일
 def get_import_paths(project_path, file_path):
     with open(file_path, 'r') as file:
         source_code = file.read()
@@ -1730,7 +1738,7 @@ def get_import_paths(project_path, file_path):
         
     return library_paths
 
-# 추가한 부분 - input 파일의 경로를 가져온다.
+# 추가한 부분 - 김위성 - input 파일의 경로를 가져온다.
 def get_file_path(project_path, file_name):
     for root, _, files in os.walk(project_path):
         for file in files:
@@ -1738,6 +1746,119 @@ def get_file_path(project_path, file_name):
                 return os.path.join(root, file)
 
     return None
+
+
+# 추가한 부분 - 김위성 - cst를 활용한 클래스 이름 변경 클래스
+class ClassNameTransformer(cst.CSTTransformer):
+    def __init__(self, rename_pairs):
+        self.rename_pairs = rename_pairs
+
+    def leave_ClassDef(self, original_node, updated_node):
+        
+        if original_node.name.value in self.rename_pairs:
+            updated_node = updated_node.with_changes(name=cst.Name(value=self.rename_pairs[original_node.name.value]))
+
+        
+        updated_bases = []
+        for base in updated_node.bases:
+            if isinstance(base, cst.Arg) and isinstance(base.value, cst.Name) and base.value.value in self.rename_pairs:
+                updated_value = base.value.with_changes(value=self.rename_pairs[base.value.value])
+                updated_base = base.with_changes(value=updated_value)
+                updated_bases.append(updated_base)
+            else:
+                updated_bases.append(base)
+        updated_node = updated_node.with_changes(bases=updated_bases)
+
+        return updated_node
+
+    def leave_Attribute(self, original_node, updated_node):
+        
+        if isinstance(updated_node.value, cst.Name) and updated_node.value.value in self.rename_pairs:
+            updated_value = updated_node.value.with_changes(value=self.rename_pairs[updated_node.value.value])
+            updated_node = updated_node.with_changes(value=updated_value)
+
+        return updated_node
+    
+    def leave_Call(self, original_node, updated_node):
+        
+        if isinstance(updated_node.func, cst.Name) and updated_node.func.value in self.rename_pairs:
+            updated_func = updated_node.func.with_changes(value=self.rename_pairs[updated_node.func.value])
+            updated_node = updated_node.with_changes(func=updated_func)
+
+        return updated_node
+    
+    def leave_Assign(self, original_node, updated_node):
+        
+        if isinstance(updated_node.value, cst.Name) and updated_node.value.value in self.rename_pairs:
+            updated_value = updated_node.value.with_changes(value=self.rename_pairs[updated_node.value.value])
+            updated_node = updated_node.with_changes(value=updated_value)
+
+        return updated_node
+
+
+# 추가한 부분 - 김위성 - cst를 활용한 함수 이름 변경 클래스
+class FunctionNameTransformer(cst.CSTTransformer):
+    def __init__(self, rename_pairs):
+        self.rename_pairs = rename_pairs
+
+    def leave_FunctionDef(self, original_node, updated_node):
+        
+        if original_node.name.value in self.rename_pairs:
+            updated_node = updated_node.with_changes(name=cst.Name(value=self.rename_pairs[original_node.name.value]))
+
+        return updated_node
+    
+    def leave_Attribute(self, original_node, updated_node):
+        
+        if isinstance(updated_node.attr, cst.Name) and updated_node.attr.value in self.rename_pairs:
+            updated_attr = updated_node.attr.with_changes(value=self.rename_pairs[updated_node.attr.value])
+            updated_node = updated_node.with_changes(attr=updated_attr)
+
+        return updated_node
+
+    def leave_Call(self, original_node, updated_node):
+        
+        if isinstance(updated_node.func, cst.Name) and updated_node.func.value in self.rename_pairs:
+            updated_func = updated_node.func.with_changes(value=self.rename_pairs[updated_node.func.value])
+            updated_node = updated_node.with_changes(func=updated_func)
+
+        return updated_node
+    
+    def leave_Assign(self, original_node, updated_node):
+        
+        if isinstance(updated_node.value, cst.Name) and updated_node.value.value in self.rename_pairs:
+            updated_value = updated_node.value.with_changes(value=self.rename_pairs[updated_node.value.value])
+            updated_node = updated_node.with_changes(value=updated_value)
+
+        return updated_node
+
+
+# 추가한 부분 - 김위성 - cst를 활용한 클래스 이름 변경
+def modify_class_name(source_code, old_name, new_name):
+    rename_candidates = {
+        old_name: new_name,
+    }
+    
+    rename_transformer = ClassNameTransformer(rename_candidates)
+    module = cst.parse_module(source_code)
+    
+    renamed_tree = module.visit(rename_transformer)
+    modified_module = renamed_tree.code
+    return modified_module.splitlines(keepends=True)
+
+
+# 추가한 부분 - 김위성 - cst를 활용한 클래스 함수 이름 변경
+def modify_function_name(source_code, old_name, new_name):
+    rename_candidates = {
+        old_name: new_name,
+    }
+    
+    rename_transformer = FunctionNameTransformer(rename_candidates)
+    module = cst.parse_module(source_code)
+    
+    renamed_tree = module.visit(rename_transformer)
+    modified_module = renamed_tree.code
+    return modified_module.splitlines(keepends=True)
 
 
 
