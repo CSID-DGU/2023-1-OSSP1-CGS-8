@@ -1,13 +1,16 @@
 class Rectangle:
-    count = 0  # 클래스 변수
+    count = 0
 
     # 초기자(initializer)
-    def __init__(self, width, height):  # self.* : 인스턴스변수
+    def __init__(self, width, height):
         self.width = width
         self.height = height
         Rectangle.count += 1
 
     # 메서드
-    def cal__carea(self):
-        area = self.width * self.height
+    '''계산하는 함수'''
+    def calc_area(self):
+        ''' 계산하는 함수를 나타낸다
+        '''
+        area = self.width*self.height + self.width*self.height
         return area
