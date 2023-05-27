@@ -89,7 +89,7 @@ from configparser import ConfigParser as SafeConfigParser, Error
 import pycodestyle
 from pycodestyle import STARTSWITH_INDENT_STATEMENT_REGEX
 
-import libcst as cst #pip install libcst
+import libcst as cst # pip install libcst
 
 __version__ = '2.0.2'
 
