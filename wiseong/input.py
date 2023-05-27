@@ -18,3 +18,7 @@ def subNumber(x, y):
 engineer = computer_engineer("jaesik", 24, "computer engineer")
 engineer.printInfo()
 addNumber(1 + 10)
+
+class cOmputer: 
+    def HiHello() :
+        return  None

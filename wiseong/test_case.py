@@ -4,12 +4,10 @@ import input
 
 
 
-class cOmputer: 
-    def f1() :
-        return  None
 
-class laptop(cOmputer):
-    def f1() :
+
+class laptop(input.cOmputer):
+    def HiHello() :
         return None
 
 def f1():
@@ -30,7 +28,6 @@ def HelloWorld():
 q = 10
 w = 20
 e = q + w
-cOmputer.f1()
 HelloWorld()
 
 
