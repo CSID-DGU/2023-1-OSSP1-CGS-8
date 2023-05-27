@@ -1576,7 +1576,7 @@ def to_snake_case(word):
         return re.sub(r'(?<!^)(?=[A-Z])', '_', word).lower()
     elif is_mixed_word(word):
         return word.lower()
-    
+        
     return word
 
 
