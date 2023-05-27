@@ -1588,14 +1588,13 @@ def find_all_identifiers(project_path, target_file):
     for file_path in importing_files:
         file_referenced = analyze_file(file_path)
         referenced.update(file_referenced)
-    
     return identifiers, referenced
 
 
 # 추가한 부분 - 김위성 - import하고 있는 파일
 def find_importing_files(project_path, target_file):
     target_file_name = os.path.splitext(os.path.basename(target_file))[0]
-    importing_files = []
+    importing_files = set()
     target_file_path = get_file_path(project_path, target_file)
     
     for root, dirs, files in os.walk(project_path):
@@ -1604,11 +1603,11 @@ def find_importing_files(project_path, target_file):
             if file_name.endswith('.py') and file_path != target_file_path:
                 # iuput 파일이 import되고 있는 경우
                 if is_file_imported(file_path, target_file_name): 
-                    importing_files.append(file_path)
+                    importing_files.add(file_path)
     
     # iuput 파일이 import하는 파일(라이브러리)의 경우
     import_path = get_import_paths(project_path, target_file)
-    importing_files.extend(import_path)
+    importing_files.update(import_path)
     return importing_files
 
 
@@ -2149,6 +2148,11 @@ def _priority_key(pep8_result):
 
     """
     priority = [
+        # 먼저 바꿔줘야 import로 인한 라인 브레이킹 문제가 없어진다.
+        # 추가한 부분 - 김위성 - 클래스 이름
+        'w701',
+        # 추가한 부분 - 김위성 - 함수 이름
+        'w702',
         # Fix multiline colon-based before semicolon based.
         'e701',
         # Break multiline statements early.
