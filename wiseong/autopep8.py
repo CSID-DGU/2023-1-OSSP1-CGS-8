@@ -1471,7 +1471,7 @@ class FixPEP8(object):
         target = self.source[line_index]
 
         function_name = extract_function_name(target)
-        fix_function_name = camel_to_snake(function_name)
+        fix_function_name = to_snake_case(function_name)
         
         # 수정한 부분 - 김위성
         if is_vaild_name(function_name, fix_function_name):
@@ -1500,14 +1500,14 @@ def is_vaild_name(origin_name, fixed_name):
     return True
 
 
+# 추가한 부분 김위성
+# 수정 - 조원준
 def is_snake_case(word):
-    if not word:
-        return False
     if not word[0].islower():
         return False
     if not all(char.islower() or char == '_' for char in word):
         return False
-    if '__' in word:
+    if '__' in word:    # 던더
         return False
     if word in keyword.kwlist:
         return False
@@ -1515,26 +1515,44 @@ def is_snake_case(word):
     return True
 
 
-def is_camel_case(word):
-    if not word:
-        return False
-    if ' ' in word:
-        return False
+# 추가 - 조원준
+# CapWords인지 확인
+def is_cap_word(word):
     if '_' in word:
         return False
-    if word[0].isupper():
-        return False
-    if any(w[0].isupper() for w in word.split()):
+    if not word[0].isupper():
         return False
     return True
 
 
+# 수정 - 조원준
+# CapWords는 아니지만 camel case인지 확인
+def is_camel_case(word):
+    if '_' in word:
+        return False
+    if word[0].isupper():
+        return False
+    return True
+
+
+# 추가 - 조원준
+# mixed_word임을 판별
+def is_mixed_word(word):
+    if '_' not in word:
+        return False
+    if all(char.islower() or char == '_' for char in word):
+        return False
+    return True
+
+
+# 추가한 부분 - 김위성
 def to_capitalized_words(word):
     """return capitalized words
     
     class naming convention
     """
     if is_snake_case(word): return string.capwords(word, sep='_').replace('_', '') 
+    elif is_mixed_word(word): return word.replace('_', '')
     
     return word[0].upper() + word[1:]
 
@@ -1546,13 +1564,20 @@ def snake_to_capwords(snake_case):
     return capitalized_words
 
 
-def camel_to_snake(camel_case):
+# 추가한 부분 - 김위성
+# 수정 - 조원준
+def to_snake_case(word):
     """return snake case
     
     method naming convention
     """
-    snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
-    return snake_case
+    
+    if is_camel_case(word) or is_cap_word(word):   
+        return re.sub(r'(?<!^)(?=[A-Z])', '_', word).lower()
+    elif is_mixed_word(word):
+        return word.lower()
+    
+    return word
 
 
 # 추가한 부분 - 클래스 이름 추출
