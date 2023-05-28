@@ -3907,6 +3907,16 @@ def parse_args(arguments, apply_config=False):
     parser = create_parser()
     args = parser.parse_args(arguments)
 
+    # 추가한 부분 - 차재식
+    # list_bracket_style_ignore
+    exec_list = bool(False)
+    # binary_newline_style_ignore
+    exec_binary = bool(False)
+    # string_quote_style_ignore
+    exec_quote = bool(False)
+
+    
+
     if not args.files and not args.list_fixes:
         parser.exit(EXIT_CODE_ARGPARSE_ERROR, 'incorrect number of arguments')
         
@@ -3949,6 +3959,8 @@ def parse_args(arguments, apply_config=False):
         
         # 이항 연산자 줄바꿈 스타일 설정
         if Customize.get_attribute('binary_newline_style'):
+            if exec_binary:
+                pass
             try:
                 style = int(Customize.get_attribute('binary_newline_style'))
                 if args.ignore != '':
@@ -3963,14 +3975,75 @@ def parse_args(arguments, apply_config=False):
         # 추가한 부분 - 차재식
         #singlequote <-> double quote 스타일 설정 
         if Customize.get_attribute('string_quote_style'):
+            if exec_quote:
+                pass
             try:
                 quote_style = int(Customize.get_attribute('string_quote_style'))
                 if quote_style == 0:
                     args.ignore += 'W744' # single_quote -> double_quote
                 elif quote_style == 1:
-                    args.ignore +='W745' # double_quote  -> single_quote
+                    args.ignore +=' W745' # double_quote  -> single_quote
             except(ValueError):
                 pass
+
+        # max_line_lenght_ignore 
+        if Customize.get_attribute('max_line_length_ignore'):          
+            try:
+                value = bool(Customize.get_attribute('max_line_length_ignore'))
+                if value:
+                    args.max_line_length = 79
+                else:
+                    pass
+            except(ValueError):
+                    print("Please enter a True or False value")
+        
+        #indent_level_ignore
+        if Customize.get_attribute('indent_level_ignore'):
+            try:
+                value = bool(Customize.get_attribute('indent_level_ignore'))
+                if value:
+                    args.indent_size = 4
+                    global DEFAULT_INDENT_SIZE
+                    DEFAULT_INDENT_SIZE = indent_level
+                else:
+                    pass
+            except(ValueError):
+                    print("Please enter a True or False value")
+
+        #list_bracket_style_ignore
+        if Customize.get_attribute('list_bracket_style_ignore'):
+            try:
+                value = bool(Customize.get_attribute('list_bracket_style_ignore'))
+                if value:
+                    exec_list = True
+                else:
+                    pass
+            except(ValueError):
+                    print("Please enter a True or False value")
+
+        #binary_newline_style_ignore
+        if Customize.get_attribute('binary_newline_style_ignore'):
+            try:
+                value = bool(Customize.get_attribute('binary_newline_style_ignore'))
+                if value:
+                    exec_binary = True
+                else:
+                    pass
+            except(ValueError):
+                    print("Please enter a True or False value")
+
+        #string_quote_style_ignore
+        if Customize.get_attribute('string_quote_style_ignore'):
+            try:
+                value = bool(Customize.get_attribute('string_quote_style_ignore'))
+                if value:
+                    exec_quote = True
+                else:
+                    pass
+            except(ValueError):
+                    print("Please enter a True or False value")
+
+
                 
 
 
