@@ -3915,7 +3915,6 @@ def parse_args(arguments, apply_config=False):
     # string_quote_style_ignore
     exec_quote = bool(False)
 
-    
 
     if not args.files and not args.list_fixes:
         parser.exit(EXIT_CODE_ARGPARSE_ERROR, 'incorrect number of arguments')
@@ -3957,6 +3956,14 @@ def parse_args(arguments, apply_config=False):
             except(ValueError):
                 pass
         
+        # 리스트 괄호 닫는 연산자 추가
+        if Customize.get_attribute('list_bracket_style'):
+            if exec_list:
+                pass
+            try:
+                # 내용 추가 예정
+            except(ValueError):
+                pass
         # 이항 연산자 줄바꿈 스타일 설정
         if Customize.get_attribute('binary_newline_style'):
             if exec_binary:
@@ -3973,7 +3980,7 @@ def parse_args(arguments, apply_config=False):
                 pass
 
         # 추가한 부분 - 차재식
-        #singlequote <-> double quote 스타일 설정 
+        # singlequote <-> double quote 스타일 설정 
         if Customize.get_attribute('string_quote_style'):
             if exec_quote:
                 pass
