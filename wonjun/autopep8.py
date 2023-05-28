@@ -166,6 +166,10 @@ PROJECT_CONFIG = ('setup.cfg', 'tox.ini', '.pep8', '.flake8')
 
 MAX_PYTHON_FILE_DETECTION_BYTES = 1024
 
+# 추가한 부분 - 김위성 - 프로젝트 내에서 input파일과 import하고 있는 파일들의 identifiers
+all_origin_identifiers = None
+# 추가한 부분 - 김위성 - 다른 파일에서 참조되고 있는지
+all_origin_referenced = None
 
 def open_with_encoding(filename, mode='r', encoding=None, limit_byte_check=-1):
     """Return opened file with a specific encoding."""
@@ -1447,13 +1451,12 @@ class FixPEP8(object):
         """fix class name"""
         line_index = result['line'] - 1
         target = self.source[line_index]
+        
         class_name = extract_class_name(target)
         
         fix_class_name = to_capitalized_words(class_name)
-        if is_mixed_word(class_name):
-            fix_class_name = mixed_to_capwords(class_name)
         
-        if is_valid_name(fix_class_name):
+        if is_valid_name(class_name, fix_class_name):
             for i, line in enumerate(self.source):
                 self.source[i] = update_line(line, class_name, fix_class_name)
 
@@ -1473,18 +1476,27 @@ class FixPEP8(object):
         elif is_mixed_word(function_name):
             fix_function_name = mixed_to_snake(function_name)
         else:
-            fix_function_name = function_name(function_name)
+            fix_function_name = function_name
         
-        if is_valid_name(fix_function_name):
+        if is_valid_name(function_name, fix_function_name):
             for i, line in enumerate(self.source):
                 self.source[i] = update_line(line, function_name, fix_function_name)
 
 
 # 추가한 부분 - 김위성
-# is_valid_name 메소드를 클래스 내부로 넣을지 말지
-def is_valid_name(name):
-    if keyword.iskeyword(name): return False
-    # if name in all_origin_identifiers: return False
+def is_valid_name(origin_name, fixed_name):
+    # 변경할 이름이 키워드 인 경우
+    if keyword.iskeyword(fixed_name): 
+        return False
+    
+    # 변경할 이름이 이미 사용되고 있는 경우
+    if fixed_name in all_origin_identifiers: 
+        return False
+    
+    # 본래 이름이 다른 파일에서 참조되고 있는 경우
+    if origin_name in all_origin_referenced: 
+        return False
+    
     return True
 
 # 수정 - 조원준
@@ -1534,9 +1546,14 @@ def to_capitalized_words(word):
     class naming convention
     """
     if is_snake_case(word): 
-        return string.capwords(word, sep='_').replace('_', '') 
-    
-    return word[0].upper() + word[1:]
+        capwords = snake_to_capwords(word)
+    elif is_camel_case(word):
+        return word[0].upper() + word[1:]
+    elif is_mixed_word(word):
+        capwords = mixed_to_capwords(word)
+    else:
+        capwords = word
+    return capwords
 
 def snake_to_capwords(snake_case):
     """return capwords"""
@@ -1608,6 +1625,95 @@ def extract_function_name(code):
         return match.group(1)
     return None
 
+# 추가한 부분 - 김위성 - 프로젝트의 경로
+def get_project_path():
+    script_path = os.path.abspath(__file__)
+    project_path = os.path.dirname(os.path.dirname(script_path))
+    return project_path
+
+# 추가한 부분 - 김위성 - import 하고 있는 파일과 해당 파일의 모든 식별자와 참조되는 식별자
+def find_all_identifiers(project_path, target_file):
+    identifiers = set()
+    referenced = set()
+    
+    # Collect identifiers from target file
+    target_identifiers, target_referenced = analyze_file(target_file)
+    identifiers.update(target_identifiers)
+    
+    # Find importing files
+    importing_files = find_importing_files(project_path, target_file)
+    
+    # Collect identifiers from importing files
+    for file_path in importing_files:
+        file_identifiers, file_referenced = analyze_file(file_path)
+        identifiers.update(file_identifiers)
+        referenced.update(file_referenced)
+    
+    return identifiers, referenced
+
+# 추가한 부분 - 김위성 - import하고 있는 파일
+def find_importing_files(project_path, target_file):
+    target_file_name = os.path.splitext(os.path.basename(target_file))[0]
+    importing_files = []
+    
+    for root, dirs, files in os.walk(project_path):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            if file_name.endswith('.py') and file_path != target_file:
+                if is_file_imported(file_path, target_file_name):
+                    importing_files.append(file_path)
+                    
+    # iuput 파일이 import하는 파일(라이브러리)의 경우
+    import_path = get_import_paths(project_path, target_file)
+    importing_files.update(import_path)
+    return importing_files
+
+# 추가한 부분 - 김위성 - 프로젝트내의 어떤 파일이 input파일을 import하는지 여부 
+def is_file_imported(file_path, target_file):
+    with open(file_path, 'r') as file:
+        source_code = file.read()
+
+    tree = ast.parse(source_code)
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                imported_module = alias.name
+                if target_file == imported_module or '.' + target_file in imported_module:
+                    return True
+        elif isinstance(node, ast.ImportFrom):
+            if node.module == target_file or '.' + target_file in node.module:
+                return True
+
+    return False
+
+# 추가한 부분 - 김위성 - 식별자, 참조되는 식별자를 모두 저장
+def analyze_file(file_path):
+    with open(file_path, 'r') as file:
+        source_code = file.read()
+    
+    tree = ast.parse(source_code)
+    identifiers = set()
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            # import하는 파일에서 상속하는 클래스
+            for base in node.bases:
+                if isinstance(base, ast.Name):
+                    identifiers.add(base.id)
+            identifiers.add(node.name)
+        elif isinstance(node, ast.FunctionDef):
+            identifiers.add(node.name)
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            identifiers.add(node.id)
+        elif isinstance(node, ast.arg):
+            identifiers.add(node.arg)
+        # import하는 파일에서 호출하는 함수
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            identifiers.add(node.func.id)
+
+    return identifiers
+
 # 추가한 부분 - 주석 부분 처리
 def update_line(line, old_name, new_name):
     try:
@@ -1627,6 +1733,176 @@ def update_line(line, old_name, new_name):
         return line.replace(comment, '').replace(old_name, new_name)
     except tokenize.TokenError:
         return line
+
+# 추가한 부분 - 김위성 - import하는 파일의 경로
+def get_library_path(project_path, library_name):
+    library_path = None
+
+    for root, _, files in os.walk(project_path):
+        for file in files:
+            if file.endswith('.py'):
+                file_path = os.path.join(root, file)
+                if library_name + '.py' in file_path:
+                    library_path = file_path
+                    break
+        
+        if library_path is not None:
+            break
+
+    return library_path
+
+# 추가한 부분 - 김위성 - import하는 파일, import되는 파일
+def get_import_paths(project_path, file_path):
+    with open(file_path, 'r') as file:
+        source_code = file.read()
+
+    tree = ast.parse(source_code)
+    import_paths = []
+    library_paths = []
+    
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                import_paths.append(alias.name)
+
+        elif isinstance(node, ast.ImportFrom):
+            module_name = node.module if node.module else ''
+            import_paths.append(module_name)
+
+                
+    for import_path in import_paths:
+        if "." in import_path:
+            import_path = import_path.split('.')[-1]
+
+        library_path = get_library_path(project_path, import_path)
+        
+        if library_path is None: continue
+        if library_path.startswith(project_path):
+
+            library_paths.append(library_path)
+        
+    return library_paths
+
+# 추가한 부분 - 김위성 - input 파일의 경로를 가져온다.
+def get_file_path(project_path, file_name):
+    for root, _, files in os.walk(project_path):
+        for file in files:
+            if file == file_name:
+                return os.path.join(root, file)
+
+    return None
+
+# 추가한 부분 - 김위성 - cst를 활용한 클래스 이름 변경 클래스
+class ClassNameTransformer(cst.CSTTransformer):
+    def __init__(self, rename_pairs):
+        self.rename_pairs = rename_pairs
+
+    def leave_ClassDef(self, original_node, updated_node):
+        
+        if original_node.name.value in self.rename_pairs:
+            updated_node = updated_node.with_changes(name=cst.Name(value=self.rename_pairs[original_node.name.value]))
+
+        
+        updated_bases = []
+        for base in updated_node.bases:
+            if isinstance(base, cst.Arg) and isinstance(base.value, cst.Name) and base.value.value in self.rename_pairs:
+                updated_value = base.value.with_changes(value=self.rename_pairs[base.value.value])
+                updated_base = base.with_changes(value=updated_value)
+                updated_bases.append(updated_base)
+            else:
+                updated_bases.append(base)
+        updated_node = updated_node.with_changes(bases=updated_bases)
+
+        return updated_node
+
+    def leave_Attribute(self, original_node, updated_node):
+        
+        if isinstance(updated_node.value, cst.Name) and updated_node.value.value in self.rename_pairs:
+            updated_value = updated_node.value.with_changes(value=self.rename_pairs[updated_node.value.value])
+            updated_node = updated_node.with_changes(value=updated_value)
+
+        return updated_node
+    
+    def leave_Call(self, original_node, updated_node):
+        
+        if isinstance(updated_node.func, cst.Name) and updated_node.func.value in self.rename_pairs:
+            updated_func = updated_node.func.with_changes(value=self.rename_pairs[updated_node.func.value])
+            updated_node = updated_node.with_changes(func=updated_func)
+
+        return updated_node
+    
+    def leave_Assign(self, original_node, updated_node):
+        
+        if isinstance(updated_node.value, cst.Name) and updated_node.value.value in self.rename_pairs:
+            updated_value = updated_node.value.with_changes(value=self.rename_pairs[updated_node.value.value])
+            updated_node = updated_node.with_changes(value=updated_value)
+
+        return updated_node
+
+
+# 추가한 부분 - 김위성 - cst를 활용한 함수 이름 변경 클래스
+class FunctionNameTransformer(cst.CSTTransformer):
+    def __init__(self, rename_pairs):
+        self.rename_pairs = rename_pairs
+
+    def leave_FunctionDef(self, original_node, updated_node):
+        
+        if original_node.name.value in self.rename_pairs:
+            updated_node = updated_node.with_changes(name=cst.Name(value=self.rename_pairs[original_node.name.value]))
+
+        return updated_node
+    
+    def leave_Attribute(self, original_node, updated_node):
+        
+        if isinstance(updated_node.attr, cst.Name) and updated_node.attr.value in self.rename_pairs:
+            updated_attr = updated_node.attr.with_changes(value=self.rename_pairs[updated_node.attr.value])
+            updated_node = updated_node.with_changes(attr=updated_attr)
+
+        return updated_node
+
+    def leave_Call(self, original_node, updated_node):
+        
+        if isinstance(updated_node.func, cst.Name) and updated_node.func.value in self.rename_pairs:
+            updated_func = updated_node.func.with_changes(value=self.rename_pairs[updated_node.func.value])
+            updated_node = updated_node.with_changes(func=updated_func)
+
+        return updated_node
+    
+    def leave_Assign(self, original_node, updated_node):
+        
+        if isinstance(updated_node.value, cst.Name) and updated_node.value.value in self.rename_pairs:
+            updated_value = updated_node.value.with_changes(value=self.rename_pairs[updated_node.value.value])
+            updated_node = updated_node.with_changes(value=updated_value)
+
+        return updated_node
+
+
+# 추가한 부분 - 김위성 - cst를 활용한 클래스 이름 변경
+def modify_class_name(source_code, old_name, new_name):
+    rename_candidates = {
+        old_name: new_name,
+    }
+    
+    rename_transformer = ClassNameTransformer(rename_candidates)
+    module = cst.parse_module(source_code)
+    
+    renamed_tree = module.visit(rename_transformer)
+    modified_module = renamed_tree.code
+    return modified_module.splitlines(keepends=True)
+
+
+# 추가한 부분 - 김위성 - cst를 활용한 클래스 함수 이름 변경
+def modify_function_name(source_code, old_name, new_name):
+    rename_candidates = {
+        old_name: new_name,
+    }
+    
+    rename_transformer = FunctionNameTransformer(rename_candidates)
+    module = cst.parse_module(source_code)
+    
+    renamed_tree = module.visit(rename_transformer)
+    modified_module = renamed_tree.code
+    return modified_module.splitlines(keepends=True)
 
 def get_module_imports_on_top_of_file(source, import_line_index):
     """return import or from keyword position
@@ -2035,6 +2311,11 @@ def _priority_key(pep8_result):
 
     """
     priority = [
+        # 먼저 바꿔줘야 import로 인한 라인 브레이킹 문제가 없어진다.
+        # 추가한 부분 - 김위성 - 클래스 이름
+        'w701',
+        # 추가한 부분 - 김위성 - 함수 이름
+        'w702',
         # Fix multiline colon-based before semicolon based.
         'e701',
         # Break multiline statements early.
@@ -4031,6 +4312,24 @@ def fix_file(filename, options=None, output=None, apply_config=False):
     if not options: # 수정 옵션이 없으면 parse_args를 이용해 command line을 파싱해옴
         options = parse_args([filename], apply_config=apply_config)
 
+    # 추가한 부분 - 김위성 - aggressive 3레벨 이상이거나 experimental 옵션일 경우
+    # input 파일 포함, import하고 있는 파일들의 식별자까지 모두 가져옴
+    if options and (options.aggressive >= 3 or options.experimental):
+        
+        # 추가한 부분 - 경고 메세지 (수정 필요)
+        command = input("계속하시겠습니까? [Y / N] : ")
+        
+        if command.upper() == 'N':
+            sys.exit()
+        if len(command) > 1:
+            print('잘못 입력하였습니다.')
+            sys.exit()
+            
+        global all_origin_identifiers 
+        global all_origin_referenced
+        project_path = get_project_path()
+        all_origin_identifiers, all_origin_referenced = find_all_identifiers(project_path, filename)
+        
     # original_source를 이용해 수정 파일의 코드를 한 줄씩 읽어옴
     original_source = readlines_from_file(filename)
 
