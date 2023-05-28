@@ -45,17 +45,29 @@ def count_close_bracket(line):
 
 # 추가한 부분 - 이선호
 # 현재 줄에 괄호 짝이 맞는지 여부와 단항, 이항 연산자 확인
-def check_continuous_line(line):
-    if line.rfind('#') != -1:
-        line = line[:line.rfind('#')-1].rstrip()
-    if (is_binary_operator(line[-1]) or
-        is_unary_operator(line[-1]) or
-        is_binary_operator(line.lstrip()[0]) or
-        is_binary_operator(line.lstrip()[0]) or
-        count_open_bracket(line) != count_close_bracket(line)):
-        return True
+def check_continuous_line(line, upperline):
+    if upperline == '':
+        if ((count_open_bracket(line) != count_close_bracket(line)) or
+            is_binary_operator(line[-1]) or
+            is_unary_operator(line[-1]) or
+            is_binary_operator(line.lstrip()[0])):
+            return True
+        else:
+            return False
     else:
-        return False
+        if upperline.rfind('#') != -1:
+            upperline = upperline[:upperline.rfind('#')].rstrip()
+        else: upperline = upperline.rstrip()
+        if ((count_open_bracket(line) != count_close_bracket(line)) or
+            is_binary_operator(line[-1]) or
+            is_unary_operator(line[-1]) or
+            is_binary_operator(line.lstrip()[0]) or
+            is_binary_operator(upperline[-1]) or
+            is_unary_operator(upperline[-1])):
+            return True
+        else:
+            return False
+    
     
 def fix_e267(self, result):
     line_index = result['line'] - 1
@@ -65,8 +77,9 @@ def fix_e267(self, result):
     self.source[line_index] = target[:offset].rstrip()
     
     # 현재 줄이나 윗 줄에 줄 잇기의 형태가 존재하면 따로 수정x
-    if (check_continuous_line(self.source[line_index]) or
-        (line_index > 0 and check_continuous_line(self.source[line_index - 1]))):
+    if ((line_index == 0 and check_continuous_line(self.source[line_index], '')) or
+        (line_index > 0 and check_continuous_line(self.source[line_index],
+                                                  self.source[line_index - 1]))):
         self.source[line_index] += ' ' + comment
     else:
         # 암시적 줄 잇기가 시작되는 줄의 들여쓰기와 인라인 주석의
@@ -77,11 +90,11 @@ def fix_e267(self, result):
 
 
 result = {}
-result['line'] = 4
-result['column'] = 29
+result['line'] = 3
+result['column'] = 26
 def self(): pass
 self.source = ['    if (a and b and', '        c.getResult(1 + 2 + 3\\',
-               '            + 4 + 5 + 6))', 'a = b # 굿이요']
+               '            + 4 + 5 + 6)) # 굿이요', 'a = b']
 
 fix_e267(self, result)
 print('\n'.join(self.source))
