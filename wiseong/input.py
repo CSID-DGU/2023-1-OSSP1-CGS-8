@@ -1,4 +1,3 @@
-# from import_input import *
 import import_input
 
 class computer_engineer(import_input.person): #computer_engineer
