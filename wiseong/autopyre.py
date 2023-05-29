@@ -106,8 +106,8 @@ COMPARE_NEGATIVE_REGEX_THROUGH = re.compile(r'\b(not\s+in|is\s+not)\s')
 BARE_EXCEPT_REGEX = re.compile(r'except\s*:')
 STARTSWITH_DEF_REGEX = re.compile(r'^(async\s+def|def)\s.*\):')
 DOCSTRING_START_REGEX = re.compile(r'^u?r?(?P<kind>["\']{3})')
-ENABLE_REGEX = re.compile(r'# *(fmt|autopep8): *on')
-DISABLE_REGEX = re.compile(r'# *(fmt|autopep8): *off')
+ENABLE_REGEX = re.compile(r'# *(fmt|autopyre): *on')
+DISABLE_REGEX = re.compile(r'# *(fmt|autopyre): *off')
 
 EXIT_CODE_OK = 0
 EXIT_CODE_ERROR = 1
@@ -3438,7 +3438,7 @@ class Reindenter(object):
     Released to the public domain, by Tim Peters, 03 October 2000.
     """
     
-    
+
     def __init__(self, input_text, leave_tabs=False):
         
         
@@ -4244,7 +4244,7 @@ def _get_package_version():
 def create_parser():
     """Return command-line parser."""
     parser = argparse.ArgumentParser(description=docstring_summary(__doc__),
-                                     prog='autopep8')
+                                     prog='autopyre')
     parser.add_argument('--version', action='version',
                         version='%(prog)s {} ({})'.format(
                             __version__, _get_package_version()))
@@ -4406,7 +4406,7 @@ def parse_args(arguments, apply_config=False):
     if len(args.files) > 1 and not (args.in_place or args.diff):
         parser.exit(
             EXIT_CODE_ARGPARSE_ERROR,
-            'autopep8 only takes one filename as argument '
+            'autopyre only takes one filename as argument '
             'unless the "--in-place" or "--diff" args are used',
         )
 
@@ -4594,10 +4594,10 @@ def read_pyproject_toml(args, parser):
     if not config:
         return None
 
-    if config.get("tool", {}).get("autopep8") is None:
+    if config.get("tool", {}).get("autopyre") is None:
         return None
 
-    config = config.get("tool").get("autopep8")
+    config = config.get("tool").get("autopyre")
 
     defaults = {}
     option_list = {o.dest: o.type or type(o.default)
