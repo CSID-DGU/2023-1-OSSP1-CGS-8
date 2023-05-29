@@ -1,4 +1,4 @@
-class Rectangle:
+class rectangle:
     count = 0
 
     # 초기자(initializer)
@@ -9,7 +9,7 @@ class Rectangle:
 
     # 메서드
     '''계산하는 함수'''
-    def calc_area(self):
+    def Calcarea(self):
         ''' 계산하는 함수를 나타낸다
         '''
         area = self.width*self.height + self.width*self.height

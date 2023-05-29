@@ -2,12 +2,11 @@ import pycodestyle
 from tabulate import tabulate
 
 file_path = 'test.py'
-checker = pycodestyle.Checker()
-checker.check_all()
+checker = pycodestyle.Checker(file_path)
 
 # 오류 코드와 발생 횟수 계산
 error_counts = {}
-for code in range(checker.check_all()):
+for code in [checker.check_all()]:  # 오류 코드와 무시된 오류를 가져옴
     if code in error_counts:
         error_counts[code] += 1
     else:
