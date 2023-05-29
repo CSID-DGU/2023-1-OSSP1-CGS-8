@@ -33,17 +33,15 @@ def make_double_quotes(text):
             i += 1
     return result
     
-    
-def fix_E744(self, result):
-    line_index = result['line'] - 1
-    target = self.source[line_index]
-    fix = make_double_quotes(target)
-    self.source[line_index] = fix
 
-def fix_E745(self,result):
+#quote style을 인수로 받음
+def fix_E745(self,result,quote_style):
     line_index = result['line'] - 1
     target = self.source[line_index]
-    fix = make_single_quotes(target)
+    if quote_style == 0:
+        fix = make_double_quotes(target)
+    elif quote_style == 1:
+        fix = make_single_quotes(target)
     self.source[line_index] = fix
 
 
@@ -60,10 +58,10 @@ self.source =  ["'''해당 줄에서 \
                나오는 경우를 찾는다'''"]
 
 
-fix_E744(self, result)
+fix_E745(self, result,0)
 print('\n'.join(self.source))
 self.source =  ['"""해당 줄에서 \
                이 연속으로 3개 \
                나오는 경우를 찾는다"""']
-fix_E745(self,result)
+fix_E745(self,result,1)
 print('\n'.join(self.source))

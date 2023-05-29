@@ -3985,11 +3985,9 @@ def parse_args(arguments, apply_config=False):
             if exec_quote:
                 pass
             try:
+                #quote_style에 0인지 1인지 저장하여 fix_745함수에 인자값으로 넣는다
                 quote_style = int(Customize.get_attribute('string_quote_style'))
-                if quote_style == 0:
-                    args.ignore += 'W744' # single_quote -> double_quote
-                elif quote_style == 1:
-                    args.ignore +=' W745' # double_quote  -> single_quote
+                args.ignore += 'W745'
             except(ValueError):
                 pass
 
