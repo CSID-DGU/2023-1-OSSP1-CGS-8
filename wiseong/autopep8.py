@@ -526,8 +526,6 @@ class FixPEP8(object):
         # 작명 컨벤션 aggressive 3레벨 일 경우와 experimental일 경우에만 실행
         if options and (options.aggressive >= 3 or options.experimental):
             self.fix_w701 = self.fix_w705
-        
-        if options and (options.aggressive >= 3 or options.experimental):
             self.fix_w702 = self.fix_w707
 
     def _fix_source(self, results):
