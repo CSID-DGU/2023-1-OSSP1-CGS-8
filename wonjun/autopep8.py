@@ -90,6 +90,7 @@ import pycodestyle
 from pycodestyle import STARTSWITH_INDENT_STATEMENT_REGEX
 
 import libcst as cst # pip install libcst
+import astunparse    # pip install astunparse
 
 __version__ = '2.0.2'
 
@@ -1638,7 +1639,7 @@ def find_all_identifiers(project_path, target_file):
     referenced = set()
     
     # Collect identifiers from target file
-    target_identifiers, target_referenced = analyze_file(target_file)
+    target_identifiers = analyze_file(target_file)
     identifiers.update(target_identifiers)
     
     # Find importing files
@@ -1655,12 +1656,13 @@ def find_all_identifiers(project_path, target_file):
 # 추가한 부분 - 김위성 - import하고 있는 파일
 def find_importing_files(project_path, target_file):
     target_file_name = os.path.splitext(os.path.basename(target_file))[0]
-    importing_files = []
+    importing_files = set()
+    target_file_path = get_file_path(project_path, target_file)
     
     for root, dirs, files in os.walk(project_path):
         for file_name in files:
             file_path = os.path.join(root, file_name)
-            if file_name.endswith('.py') and file_path != target_file:
+            if file_name.endswith('.py') and file_path != target_file_path:
                 if is_file_imported(file_path, target_file_name):
                     importing_files.append(file_path)
                     
@@ -1902,6 +1904,39 @@ def modify_function_name(source_code, old_name, new_name):
     renamed_tree = module.visit(rename_transformer)
     modified_module = renamed_tree.code
     return modified_module.splitlines(keepends=True)
+
+# 추가한 부분 - 조원준 - alias 코드 삽입
+def add_alias(code, alias_dict):
+    tree = ast.parse(code)
+    transformer = AliasTransformer(alias_dict)
+    transformed_tree = transformer.visit(tree)
+    transformed_code = astunparse.unparse(transformed_tree)
+    return transformed_code
+
+# 추가한 부분 - 조원준 
+class AliasTransformer(ast.NodeTransformer):
+    def __init__(self, alias_dict):
+        self.alias_dict = alias_dict
+
+    def visit_ClassDef(self, node):
+        if node.name in self.alias_dict:
+            alias_name = self.alias_dict[node.name]
+            alias_assignment = ast.parse(f'{alias_name} = {node.name}').body[0]
+            alias_assignment.lineno = node.lineno
+            alias_assignment.col_offset = node.col_offset
+            node.name = alias_name
+            return [alias_assignment, node]
+        return node
+
+    def visit_FunctionDef(self, node):
+        if node.name in self.alias_dict:
+            alias_name = self.alias_dict[node.name]
+            alias_assignment = ast.parse(f'{alias_name} = {node.name}').body[0]
+            alias_assignment.lineno = node.lineno
+            alias_assignment.col_offset = node.col_offset
+            node.name = alias_name
+            return [alias_assignment, node]
+        return node
 
 def get_module_imports_on_top_of_file(source, import_line_index):
     """return import or from keyword position
