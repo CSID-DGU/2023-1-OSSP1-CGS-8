@@ -18,12 +18,12 @@ def camelCase():
 def snakecaselower():
     return None
 
-# mixed_case로 변경 --> 구현 중
+# mixed_case로 변경
 def Mixed_Case():
     return None
 
-# mixed_case2로 변경 --> 구현 중
-def mixed_Case2():
-    return None
+# # mixed_case2로 변경
+# def mixed_Case2():
+#     return None
 
 # python3 autopep8.py --aggressive --aggressive --aggressive test_W702.py

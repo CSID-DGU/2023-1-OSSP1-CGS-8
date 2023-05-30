@@ -11,14 +11,14 @@ class CapWords:
 class camelCase:    
     def a():
         return None
-    
+        
 # Noncapwords로 변경
 class noncapwords:
     def b():
         return None
 
-# MixedCase로 변경
-class mixed_case:
+# SnakeCase로 변경
+class snake_case:
     def c():
         return None
 
@@ -32,10 +32,15 @@ class A:
     def e():
         return None
     
-# MixedCase2로 변경 --> 아직 구현 단계
-class Mixed_Case2:
+# MixedCase로 변경
+class Mixed_Case:
     def g():
         return None
+
+# # MixedCase2로 변경
+# class mixed_Case2:
+#     def g2():
+#         return None
 
 # 변경 X, Capwords 컨벤션 만족
 class AbCd:
