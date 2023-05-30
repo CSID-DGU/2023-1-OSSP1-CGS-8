@@ -1783,10 +1783,20 @@ def string_double_quote(logical_line, tokens):
         if token_type == tokenize.STRING:
             not_recommend_single_quote = line[:start[1]].strip()
             if not_recommend_single_quote:
-                yield (start, "E744 string is expressed in double quotes")
+                yield (start, "W744 double quotation marks are recommended for strings")
         elif token_type != tokenize.STRING:
             prev_end = end
 
+# 추가한 부분 - 김태욱 / use double quotes in a docstring
+@register_check
+def docstring_single_quote(logical_line, tokens):
+    prev_end = (0,0)
+    for token_type, text, start, end, line in tokens:
+        if token_type == tokenize.STRING and (text.startswith("'''") or text.endswith("'''")):
+                yield (start, "W745 double quotation marks are recommended for docstrings")
+        elif token_type != tokenize.STRING:
+            prev_end = end
+            
 ########################################################################
 @register_check
 def maximum_doc_length(logical_line, max_doc_length, noqa, tokens):
