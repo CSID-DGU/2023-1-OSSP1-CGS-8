@@ -1455,12 +1455,14 @@ class FixPEP8(object):
         target = self.source[line_index]
         
         class_name = extract_class_name(target)
-        
         fix_class_name = to_capitalized_words(class_name)
         
         if is_valid_name(class_name, fix_class_name):
-            for i, line in enumerate(self.source):
-                self.source[i] = update_line(line, class_name, fix_class_name)
+            origin_source = ''.join(self.source)
+            self.source = modify_class_name(origin_source, class_name, fix_class_name)
+        # if is_vaild_name(class_name, fix_class_name):
+        #     for i, line in enumerate(self.source):
+        #         self.source[i] = update_line(line, class_name, fix_class_name)
 
     # 추가한 부분 (작명 컨벤션 - 함수)- 김위성
     # 수정 - 조원준
@@ -1470,19 +1472,24 @@ class FixPEP8(object):
         target = self.source[line_index]
 
         function_name = extract_function_name(target)
+        fix_function_name = to_snake_case(function_name)
         
-        if is_camel_case(function_name):
-            fix_function_name = camel_to_snake(function_name)
-        elif is_cap_word(function_name):
-            fix_function_name = capwords_to_snake(function_name)
-        elif is_mixed_word(function_name):
-            fix_function_name = mixed_to_snake(function_name)
-        else:
-            fix_function_name = function_name
+        # if is_camel_case(function_name):
+        #     fix_function_name = camel_to_snake(function_name)
+        # elif is_cap_word(function_name):
+        #     fix_function_name = capwords_to_snake(function_name)
+        # elif is_mixed_word(function_name):
+        #     fix_function_name = mixed_to_snake(function_name)
+        # else:
+        #     fix_function_name = function_name
         
         if is_valid_name(function_name, fix_function_name):
-            for i, line in enumerate(self.source):
-                self.source[i] = update_line(line, function_name, fix_function_name)
+            origin_source = ''.join(self.source)
+            self.source = modify_function_name(origin_source, function_name, fix_function_name)
+        
+        # if is_vaild_name(function_name, fix_function_name):
+        #     for i, line in enumerate(self.source):
+        #         self.source[i] = update_line(line, function_name, fix_function_name)
 
 
 # 추가한 부분 - 김위성
@@ -1509,13 +1516,13 @@ def is_valid_name(origin_name, fixed_name):
 def is_snake_case(word):
     if not isinstance(word, str): 
         return False
-    if not word[0].islower():
+    elif not word[0].islower():
         return False
-    if not all(char.islower() or char == '_' for char in word):
+    elif not all(char.islower() or char == '_' for char in word):
         return False
-    if '__' in word:    # 던더
+    elif '__' in word:    # 던더
         return False
-    if word in keyword.kwlist:
+    elif word in keyword.kwlist:
         return False
     
     return True
@@ -1525,9 +1532,9 @@ def is_snake_case(word):
 def is_cap_word(word):
     if not isinstance(word, str): 
         return False
-    if '_' in word:
+    elif '_' in word:
         return False
-    if not word[0].isupper():
+    elif not word[0].isupper():
         return False
     return True
     
@@ -1536,9 +1543,9 @@ def is_cap_word(word):
 def is_camel_case(word):
     if not isinstance(word, str): 
         return False
-    if '_' in word:
+    elif '_' in word:
         return False
-    if word[0].isupper():
+    elif word[0].isupper():
         return False
     return True
 
@@ -1547,81 +1554,104 @@ def is_camel_case(word):
 def is_mixed_word(word):
     if not isinstance(word, str): 
         return False
-    if '_' not in word:
+    elif '_' not in word:
         return False
-    if all(char.islower() or char == '_' for char in word):
+    elif all(char.islower() or char == '_' for char in word):
         return False
     return True
 
-# snake case를 CapWords로 변경
+# 추가한 부분 - 김위성
 def to_capitalized_words(word):
     """return capitalized words
     
     class naming convention
     """
-    if is_snake_case(word): 
-        capwords = snake_to_capwords(word)
-    elif is_camel_case(word):
-        return word[0].upper() + word[1:]
-    elif is_mixed_word(word):
-        capwords = mixed_to_capwords(word)
-    else:
-        capwords = word
-    return capwords
+    
+    if not isinstance(word, str): 
+        return None
+    
+    elif word[0] == '_': 
+        return word
+    
+    elif is_snake_case(word): 
+        return string.capwords(word, sep='_').replace('_', '') 
+    
+    elif is_mixed_word(word): 
+        return word.replace('_', '')
+    
+    return word[0].upper() + word[1:]
 
-def snake_to_capwords(snake_case):
-    """return capwords"""
-    if is_snake_case(snake_case): 
-        return snake_case
-    capitalized_words = string.capwords(snake_case, sep='_').replace('_', '')
-    return capitalized_words
+# def snake_to_capwords(snake_case):
+#     """return capwords"""
+#     if is_snake_case(snake_case): 
+#         return snake_case
+#     capitalized_words = string.capwords(snake_case, sep='_').replace('_', '')
+#     return capitalized_words
 
+# # 추가 - 조원준
+# # 클래스명이 mixed word로 작성되었을 때 CapWords로 변경
+# def mixed_to_capwords(mixed_word):
+#     """return snake case
+
+#     method naming convention
+#     """
+#     u_list = mixed_word.split('_')
+#     upper_list = [u_list[0][0].upper() + u_list[0][1:]] + [word.capitalize() for word in u_list[1:]]
+#     capwords = ''.join(upper_list)
+#     return capwords
+
+# # 수정 - 조원준
+# def camel_to_snake(camel_case):
+#     """return snake case
+    
+#     method naming convention
+#     """
+#     snake_case = camel_case
+#     if is_camel_case(camel_case):   
+#         snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
+#     return snake_case
+
+# # 추가 - 조원준
+# def capwords_to_snake(cap_word):
+#     """return snake case
+    
+#     method naming convention
+#     """
+#     snake_case = cap_word
+#     if is_cap_word(cap_word):
+#         camel_case = cap_word[0].lower() + cap_word[1:]
+#         snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
+#     return snake_case
+
+# # 추가 - 조원준
+# # 함수명이 mixed word로 쓰였을 때 snake_case로 변경
+# def mixed_to_snake(mixed_word):
+#     """return snake case
+
+#     method naming convention
+#     """    
+#     u_list = mixed_word.split('_')
+#     lower_list = [u_list[0].lower()] + [word.lower() for word in u_list[1:]]
+#     snake_case = '_'.join(lower_list)
+#     return snake_case
+
+# 추가한 부분 - 김위성
 # 수정 - 조원준
-def camel_to_snake(camel_case):
+def to_snake_case(word):
     """return snake case
     
     method naming convention
     """
-    snake_case = camel_case
-    if is_camel_case(camel_case):   
-        snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
-    return snake_case
-
-# 추가 - 조원준
-def capwords_to_snake(cap_word):
-    """return snake case
+    if not isinstance(word, str): 
+        return None
     
-    method naming convention
-    """
-    snake_case = cap_word
-    if is_cap_word(cap_word):
-        camel_case = cap_word[0].lower() + cap_word[1:]
-        snake_case = re.sub(r'(?<!^)(?=[A-Z])', '_', camel_case).lower()
-    return snake_case
-
-# 추가 - 조원준
-# 함수명이 mixed word로 쓰였을 때 snake_case로 변경
-def mixed_to_snake(mixed_word):
-    """return snake case
-
-    method naming convention
-    """    
-    u_list = mixed_word.split('_')
-    lower_list = [u_list[0].lower()] + [word.lower() for word in u_list[1:]]
-    snake_case = '_'.join(lower_list)
-    return snake_case
-
-# 추가 - 조원준
-# 클래스명이 mixed word로 작성되었을 때 CapWords로 변경
-def mixed_to_capwords(mixed_word):
-    """return snake case
-
-    method naming convention
-    """
-    u_list = mixed_word.split('_')
-    upper_list = [u_list[0][0].upper() + u_list[0][1:]] + [word.capitalize() for word in u_list[1:]]
-    capwords = ''.join(upper_list)
-    return capwords
+    if is_camel_case(word) or is_cap_word(word):   
+        return re.sub(r'(?<!^)(?=[A-Z])', '_', word).lower()
+    
+    elif is_mixed_word(word):
+        return word.lower()
+    
+    return word
 
 # 추가한 부분 - 클래스 이름 추출
 def extract_class_name(code):
@@ -1659,10 +1689,8 @@ def find_all_identifiers(project_path, target_file):
     
     # Collect identifiers from importing files
     for file_path in importing_files:
-        file_identifiers, file_referenced = analyze_file(file_path)
-        identifiers.update(file_identifiers)
+        file_referenced = analyze_file(file_path)
         referenced.update(file_referenced)
-    
     return identifiers, referenced
 
 # 추가한 부분 - 김위성 - import하고 있는 파일

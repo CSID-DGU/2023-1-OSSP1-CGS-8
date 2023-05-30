@@ -9,12 +9,15 @@ class Person:
 class Student(Person):
     def greeting():
         print('hi. hello')
-        
+
+# W701 애러 -> 포매팅 후 SuperClass: 로 변경
 # W702 에러 -> 포매팅 후 greeting_hello()으로 변경
 class super_class:
     def GreetingHello():
         print('hi. A')
-        
+
+# W701 애러 -> 포매팅 후 SubClass(SuperClass): 로 변경
+# W702 에러 -> 포매팅 후 greeting_hello()으로 변경
 class sub_class(super_class):
     def GreetingHello():
         print('hi. B')
@@ -32,10 +35,10 @@ class D(C):
 Person.greeting()
 Student.greeting()
 
-# 포매팅 후 A.greeting_hello()로 변경
+# 포매팅 후 SuperClass.greeting_hello()로 변경
 super_class.GreetingHello()
 
-# 포매팅 후 B.greeting_hello()로 변경
+# 포매팅 후 SubClass.greeting_hello()로 변경
 sub_class.GreetingHello()
 
 # 포매팅 후 C.greeting_hi()로 변경
