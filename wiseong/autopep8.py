@@ -1648,7 +1648,7 @@ def is_file_imported(file_path, target_file):
         source_code = file.read()
 
     tree = ast.parse(source_code)
-
+    
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
@@ -4301,8 +4301,9 @@ def fix_file(filename, options=None, output=None, apply_config=False):
                         + "해당 옵션을 적용 시 PEP8 스타일 가이드에서 권장하는 클래스와 함수의 작명 규칙을 \n"\
                         + "따르지 않을 경우 권장하는 스타일에 맞게 수정해줍니다. 귀하의 팀원들과 공유하는 \n"\
                         + "특별한 작명 컨벤션이 있다면 수정을 권장하지 않습니다.\n"\
-                        + "계속하시겠습니까? [Y / N] : "
+                        + "계속 하시겠습니까? [Y / N] : "
         command = input(warning_message)
+        print()
         
         if command.upper() == 'N':
             sys.exit()
