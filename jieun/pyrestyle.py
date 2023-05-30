@@ -60,6 +60,7 @@ import warnings
 from fnmatch import fnmatch
 from functools import lru_cache
 from optparse import OptionParser
+from tabulate import tabulate
 
 # this is a performance hack.  see https://bugs.python.org/issue43014
 if (
@@ -2346,10 +2347,28 @@ class BaseReport:
         return ['%-7s %s %s' % (self.counters[key], key, self.messages[key])
                 for key in sorted(self.messages) if key.startswith(prefix)]
 
+    # 추가한 부분 - 하지은 / Print overall statistics
     def print_statistics(self, prefix=''):
-        """Print overall statistics (number of errors and warnings)."""
-        for line in self.get_statistics(prefix):
-            print(line)
+        
+        # Error code, Description, Count 출력
+        table = {'Error code': [], 'Description': [], 'Count': []}
+        
+        for index, key in enumerate(sorted(self.messages), 1):
+            if key.startswith(prefix):
+                table['Error code'].append(key)
+                table['Description'].append(self.messages[key])
+                table['Count'].append(self.counters[key])
+        
+        # Count 열에 get_count의 출력값 추가(error의 총 개수)
+        count_sum = 'Sum : ' + str(self.get_count(prefix))
+        table['Count'].append(count_sum)
+        
+        # Error code 열에 추가(error code의 총 개수)
+        count_error = 'Sum : ' + str(index)
+        table['Error code'].append(count_error)      
+        
+        print(tabulate(table, headers='keys', tablefmt='fancy_grid', missingval=''))
+        
 
     def print_benchmark(self):
         """Print benchmark numbers."""
