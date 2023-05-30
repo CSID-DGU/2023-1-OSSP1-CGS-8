@@ -1487,6 +1487,10 @@ class FixPEP8(object):
 
 # 추가한 부분 - 김위성
 def is_valid_name(origin_name, fixed_name):
+    
+    if not (isinstance(origin_name, str) and isinstance(fixed_name, str)) : 
+        return False
+    
     # 변경할 이름이 키워드 인 경우
     if keyword.iskeyword(fixed_name): 
         return False
@@ -1503,6 +1507,8 @@ def is_valid_name(origin_name, fixed_name):
 
 # 수정 - 조원준
 def is_snake_case(word):
+    if not isinstance(word, str): 
+        return False
     if not word[0].islower():
         return False
     if not all(char.islower() or char == '_' for char in word):
@@ -1517,6 +1523,8 @@ def is_snake_case(word):
 # 추가 - 조원준
 # CapWords인지 확인
 def is_cap_word(word):
+    if not isinstance(word, str): 
+        return False
     if '_' in word:
         return False
     if not word[0].isupper():
@@ -1526,6 +1534,8 @@ def is_cap_word(word):
 # 수정 - 조원준
 # CapWords는 아니지만 camel case인지 확인
 def is_camel_case(word):
+    if not isinstance(word, str): 
+        return False
     if '_' in word:
         return False
     if word[0].isupper():
@@ -1535,6 +1545,8 @@ def is_camel_case(word):
 # 추가 - 조원준
 # mixed_word임을 판별
 def is_mixed_word(word):
+    if not isinstance(word, str): 
+        return False
     if '_' not in word:
         return False
     if all(char.islower() or char == '_' for char in word):
@@ -1905,38 +1917,38 @@ def modify_function_name(source_code, old_name, new_name):
     modified_module = renamed_tree.code
     return modified_module.splitlines(keepends=True)
 
-# 추가한 부분 - 조원준 - alias 코드 삽입
-def add_alias(code, alias_dict):
-    tree = ast.parse(code)
-    transformer = AliasTransformer(alias_dict)
-    transformed_tree = transformer.visit(tree)
-    transformed_code = astunparse.unparse(transformed_tree)
-    return transformed_code
+# # 추가한 부분 - 조원준 - alias 코드 삽입
+# def add_alias(code, alias_dict):
+#     tree = ast.parse(code)
+#     transformer = AliasTransformer(alias_dict)
+#     transformed_tree = transformer.visit(tree)
+#     transformed_code = astunparse.unparse(transformed_tree)
+#     return transformed_code
 
-# 추가한 부분 - 조원준 
-class AliasTransformer(ast.NodeTransformer):
-    def __init__(self, alias_dict):
-        self.alias_dict = alias_dict
+# # 추가한 부분 - 조원준 
+# class AliasTransformer(ast.NodeTransformer):
+#     def __init__(self, alias_dict):
+#         self.alias_dict = alias_dict
 
-    def visit_ClassDef(self, node):
-        if node.name in self.alias_dict:
-            alias_name = self.alias_dict[node.name]
-            alias_assignment = ast.parse(f'{alias_name} = {node.name}').body[0]
-            alias_assignment.lineno = node.lineno
-            alias_assignment.col_offset = node.col_offset
-            node.name = alias_name
-            return [alias_assignment, node]
-        return node
+#     def visit_ClassDef(self, node):
+#         if node.name in self.alias_dict:
+#             alias_name = self.alias_dict[node.name]
+#             alias_assignment = ast.parse(f'{alias_name} = {node.name}').body[0]
+#             alias_assignment.lineno = node.lineno
+#             alias_assignment.col_offset = node.col_offset
+#             node.name = alias_name
+#             return [alias_assignment, node]
+#         return node
 
-    def visit_FunctionDef(self, node):
-        if node.name in self.alias_dict:
-            alias_name = self.alias_dict[node.name]
-            alias_assignment = ast.parse(f'{alias_name} = {node.name}').body[0]
-            alias_assignment.lineno = node.lineno
-            alias_assignment.col_offset = node.col_offset
-            node.name = alias_name
-            return [alias_assignment, node]
-        return node
+#     def visit_FunctionDef(self, node):
+#         if node.name in self.alias_dict:
+#             alias_name = self.alias_dict[node.name]
+#             alias_assignment = ast.parse(f'{alias_name} = {node.name}').body[0]
+#             alias_assignment.lineno = node.lineno
+#             alias_assignment.col_offset = node.col_offset
+#             node.name = alias_name
+#             return [alias_assignment, node]
+#         return node
 
 def get_module_imports_on_top_of_file(source, import_line_index):
     """return import or from keyword position
