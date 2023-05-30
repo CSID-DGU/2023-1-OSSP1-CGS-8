@@ -89,6 +89,7 @@ from configparser import ConfigParser as SafeConfigParser, Error
 import pycodestyle
 from pycodestyle import STARTSWITH_INDENT_STATEMENT_REGEX
 
+import libcst as cst # pip install libcst
 
 __version__ = '2.0.2'
 
@@ -1876,7 +1877,6 @@ class FunctionNameTransformer(cst.CSTTransformer):
 
         return updated_node
 
-
 # 추가한 부분 - 김위성 - cst를 활용한 클래스 이름 변경
 def modify_class_name(source_code, old_name, new_name):
     rename_candidates = {
@@ -1889,7 +1889,6 @@ def modify_class_name(source_code, old_name, new_name):
     renamed_tree = module.visit(rename_transformer)
     modified_module = renamed_tree.code
     return modified_module.splitlines(keepends=True)
-
 
 # 추가한 부분 - 김위성 - cst를 활용한 클래스 함수 이름 변경
 def modify_function_name(source_code, old_name, new_name):
@@ -4316,8 +4315,13 @@ def fix_file(filename, options=None, output=None, apply_config=False):
     # input 파일 포함, import하고 있는 파일들의 식별자까지 모두 가져옴
     if options and (options.aggressive >= 3 or options.experimental):
         
-        # 추가한 부분 - 경고 메세지 (수정 필요)
-        command = input("계속하시겠습니까? [Y / N] : ")
+        # 추가한 부분 - 경고 메세지
+        warning_message = f"\n{'[Warning]':-^79}\n"\
+                        + "해당 옵션을 적용 시 PEP8 스타일 가이드에서 권장하는 클래스와 함수의 작명 규칙을 \n"\
+                        + "따르지 않을 경우 권장하는 스타일에 맞게 수정해줍니다. 귀하의 팀원들과 공유하는 \n"\
+                        + "특별한 작명 컨벤션이 있다면 수정을 권장하지 않습니다.\n"\
+                        + "계속하시겠습니까? [Y / N] : "
+        command = input(warning_message)
         
         if command.upper() == 'N':
             sys.exit()
