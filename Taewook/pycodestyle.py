@@ -57,6 +57,7 @@ import sys
 import time
 import tokenize
 import warnings
+import ast
 from fnmatch import fnmatch
 from functools import lru_cache
 from optparse import OptionParser
@@ -1727,13 +1728,14 @@ def is_capwords(word):
     return True
 
 @register_check
-def class_name_convention(logical_line, tokens):    
+def class_name_convention(logical_line, tokens):
     prev_end = (0, 0)
     for token_type, text, start, end, line in tokens:
-        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text) and "class" in line:
-            not_recommand_class_name = line[:start[1]].strip()
-            if not_recommand_class_name:
-                yield (start, "W701 class name is recommended CapitalizedWords")
+        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text):
+            if isinstance(ast.parse(line.strip()).body[0], ast.ClassDef):
+                class_name = line[start[1]:end[1]]
+                if not class_name[0].isupper():
+                    yield (start, "W701 class name is recommended CapitalizedWords")
         elif token_type != tokenize.NL:
             prev_end = end
             
