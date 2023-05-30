@@ -1,7 +1,7 @@
 # __author__ = ('Wonjun Jo <c68254@gmail.com>')
 
 # 같은 파일 내에서 클래스 상속 후 오버라이딩 메소드 예시
-# 문제가 없는 경우
+# 올바른 작명 컨벤션
 class Person:
     def greeting():
         print('hi.')
@@ -10,27 +10,38 @@ class Student(Person):
     def greeting():
         print('hi. hello')
         
-# W702 에러 -> 포매팅 후 greeting()으로 변경
-class A:
-    def Greeting():
+# W702 에러 -> 포매팅 후 greeting_hello()으로 변경
+class super_class:
+    def GreetingHello():
         print('hi. A')
         
-class B(A):
-    def Greeting():
+class sub_class(super_class):
+    def GreetingHello():
         print('hi. B')
         
 #W702 에러 -> 포매팅 후 greeting_hi()로 변경
 class C:
-    def GreetingHi():
+    def greetingHi():
         print('hi. C')
         
 class D(C):
-    def GreetingHi():
+    def greetingHi():
         print('hi. D')
         
+# 변경 X
 Person.greeting()
 Student.greeting()
-A.Greeting()
-B.Greeting()
-C.GreetingHi()
-D.GreetingHi()
+
+# 포매팅 후 A.greeting_hello()로 변경
+super_class.GreetingHello()
+
+# 포매팅 후 B.greeting_hello()로 변경
+sub_class.GreetingHello()
+
+# 포매팅 후 C.greeting_hi()로 변경
+C.greetingHi()
+
+# 포매팅 후 D.greeting_hi()로 변경
+D.greetingHi()
+
+# python3 autopep8.py --aggressive --aggressive --aggressive test_overriding_same_file.py
