@@ -1481,11 +1481,11 @@ class FixPEP8(object):
         #         self.source[i] = update_line(line, function_name, fix_function_name)
 
 
+
 # 추가한 부분 - 김위성
 def is_vaild_name(origin_name, fixed_name):
     
-    # 추가한 부분 - 잘못 전달된 이름의 경우
-    if fixed_name[0] == '_' or ' ' in fixed_name: 
+    if not (isinstance(origin_name, str) and isinstance(fixed_name, str)) : 
         return False
     
     # 변경할 이름이 키워드 인 경우
@@ -1506,13 +1506,20 @@ def is_vaild_name(origin_name, fixed_name):
 # 추가한 부분 김위성
 # 수정 - 조원준
 def is_snake_case(word):
-    if not word[0].islower():
+    
+    if not isinstance(word, str): 
         return False
-    if not all(char.islower() or char == '_' for char in word):
+    
+    elif not word[0].islower():
         return False
-    if '__' in word:    # 던더
+    
+    elif not all(char.islower() or char == '_' for char in word):
         return False
-    if word in keyword.kwlist:
+    
+    elif '__' in word:    # 던더
+        return False
+    
+    elif word in keyword.kwlist:
         return False
     
     return True
@@ -1521,30 +1528,48 @@ def is_snake_case(word):
 # 추가 - 조원준
 # CapWords인지 확인
 def is_cap_word(word):
-    if '_' in word:
+    
+    if not isinstance(word,str): 
         return False
-    if not word[0].isupper():
+    
+    elif '_' in word:
         return False
+    
+    elif not word[0].isupper():
+        return False
+    
     return True
 
 
 # 수정 - 조원준
 # CapWords는 아니지만 camel case인지 확인
 def is_camel_case(word):
-    if '_' in word:
+    
+    if not isinstance(word, str): 
         return False
-    if word[0].isupper():
+    
+    elif '_' in word:
         return False
+    
+    elif word[0].isupper():
+        return False
+    
     return True
 
 
 # 추가 - 조원준
 # mixed_word임을 판별
 def is_mixed_word(word):
-    if '_' not in word:
+    
+    if not isinstance(word, str): 
         return False
-    if all(char.islower() or char == '_' for char in word):
+    
+    elif '_' not in word:
         return False
+    
+    elif all(char.islower() or char == '_' for char in word):
+        return False
+    
     return True
 
 
@@ -1554,19 +1579,20 @@ def to_capitalized_words(word):
     
     class naming convention
     """
-    if word is None  or ' ' in word: return ' '
-    if word[0] == '_': return word 
-    elif is_snake_case(word): return string.capwords(word, sep='_').replace('_', '') 
-    elif is_mixed_word(word): return word.replace('_', '')
+    
+    if not isinstance(word, str): 
+        return None
+    
+    elif word[0] == '_': 
+        return word
+    
+    elif is_snake_case(word): 
+        return string.capwords(word, sep='_').replace('_', '') 
+    
+    elif is_mixed_word(word): 
+        return word.replace('_', '')
     
     return word[0].upper() + word[1:]
-
-
-def snake_to_capwords(snake_case):
-    """return capwords"""
-    if is_snake_case(snake_case): return snake_case
-    capitalized_words = string.capwords(snake_case, sep='_').replace('_', '')
-    return capitalized_words
 
 
 # 추가한 부분 - 김위성
@@ -1576,12 +1602,15 @@ def to_snake_case(word):
     
     method naming convention
     """
+    if not isinstance(word, str): 
+        return None
     
     if is_camel_case(word) or is_cap_word(word):   
         return re.sub(r'(?<!^)(?=[A-Z])', '_', word).lower()
+    
     elif is_mixed_word(word):
         return word.lower()
-        
+    
     return word
 
 
