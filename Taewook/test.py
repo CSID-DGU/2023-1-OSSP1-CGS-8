@@ -3,5 +3,6 @@ class rectangle:
         self.width = width
         self.height = height
 
-    def area(self):
+# class rectangle
+    def Area(self):
         return self.width * self.height
