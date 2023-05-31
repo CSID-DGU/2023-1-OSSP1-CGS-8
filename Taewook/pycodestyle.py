@@ -1715,22 +1715,6 @@ def python_3000_async_await_keywords(logical_line, tokens):
             "Python 3.7",
         )
 
-# ast모듈을 통해 주어진 코드에서 class의 존재를 확인하는 함수
-def check_class_def(code):
-    try:
-        # 파싱
-        tree = ast.parse(code)
-        # 모든 노드 순회
-        for node in ast.walk(tree):
-            # classDef 노드 확인
-            if isinstance(node, ast.ClassDef):
-                return True
-    except SyntaxError:
-        # 잘못된 구문
-        return False
-
-    return False
-
 # 추가한 부분 - 김태욱/ class name
 def is_capwords(word):
       
@@ -1744,6 +1728,21 @@ def is_capwords(word):
 
     return True
 
+# ast모듈을 통해 주어진 코드에서 class의 존재를 확인하는 함수
+def check_class_def(code):
+    try:
+        # 파싱
+        tree = ast.parse(code)
+        # 모든 노드 순회
+        for node in ast.walk(tree):
+            # classDef 노드 확인
+            if isinstance(node, ast.ClassDef):
+                return True
+    except SyntaxError:
+        # 잘못된 구문
+        return True
+    return False
+
 # class명을 정규 표현식으로 추출하는 함수
 def extract_class_name(line):
     pattern = r"class\s+([A-Za-z0-9_]*)"
@@ -1754,10 +1753,13 @@ def extract_class_name(line):
     return None
 
 @register_check
-def class_name_convention(logical_line, tokens):    
+def class_name_convention(logical_line, tokens):
+    if not check_class_def(logical_line):
+        return 
+
     prev_end = (0, 0)
     for token_type, text, start, end, line in tokens:
-        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text) and check_class_def(line):
+        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text):
             not_recommand_class_name = extract_class_name(line)
             if not_recommand_class_name:
                 yield (start, "W701 class name is recommended CapitalizedWords")
