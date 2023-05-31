@@ -1782,13 +1782,22 @@ def is_snakecase(word):
             return False
 
     return True
+
+# 함수명을 정규 표현식으로 추출하는 함수
+def extract_func_name(line):
+    pattern = r"def\s+([A-Za-z0-9_]*)"
+    match = re.search(pattern, line)
+    if match:
+        func_name = match.group(1)
+        return func_name
+    return None
     
 @register_check
 def func_name_convention(logical_line, tokens):    
     prev_end = (0, 0)
     for token_type, text, start, end, line in tokens:
         if token_type == tokenize.NAME and text not in keyword.kwlist and not is_snakecase(text) and "def" in line:
-            not_recommand_func_name = line[:start[1]].strip()
+            not_recommand_func_name = extract_func_name(line)
             if not_recommand_func_name:
                 yield (start, "W702 function name is recommended snake_case")
         elif token_type != tokenize.NL:
