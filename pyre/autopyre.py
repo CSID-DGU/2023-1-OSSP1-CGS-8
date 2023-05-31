@@ -1785,6 +1785,7 @@ def get_import_paths(project_path, file_path):
         
     return library_paths
 
+
 # 추가한 부분 - 김위성 - input 파일의 경로를 가져온다.
 def get_file_path(project_path, file_name):
     for root, _, files in os.walk(project_path):
@@ -1804,7 +1805,6 @@ class ClassNameTransformer(cst.CSTTransformer):
         
         if original_node.name.value in self.rename_pairs:
             updated_node = updated_node.with_changes(name=cst.Name(value=self.rename_pairs[original_node.name.value]))
-
         
         updated_bases = []
         for base in updated_node.bases:
