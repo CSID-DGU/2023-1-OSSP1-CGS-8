@@ -1458,9 +1458,7 @@ class FixPEP8(object):
         if is_vaild_name(class_name, fix_class_name):
             origin_source = ''.join(self.source)
             self.source = modify_class_name(origin_source, class_name, fix_class_name)
-        # if is_vaild_name(class_name, fix_class_name):
-        #     for i, line in enumerate(self.source):
-        #         self.source[i] = update_line(line, class_name, fix_class_name)
+
 
     # 추가한 부분 (작명 컨벤션 - 함수)- 김위성
     def fix_w707(self, result):
@@ -1475,10 +1473,7 @@ class FixPEP8(object):
         if is_vaild_name(function_name, fix_function_name):
             origin_source = ''.join(self.source)
             self.source = modify_function_name(origin_source, function_name, fix_function_name)
-        
-        # if is_vaild_name(function_name, fix_function_name):
-        #     for i, line in enumerate(self.source):
-        #         self.source[i] = update_line(line, function_name, fix_function_name)
+
 
 
 
@@ -1602,6 +1597,7 @@ def to_snake_case(word):
     
     method naming convention
     """
+    
     if not isinstance(word, str): 
         return None
     
@@ -1683,7 +1679,11 @@ def is_file_imported(file_path, target_file):
     with open(file_path, 'r') as file:
         source_code = file.read()
     
-    tree = ast.parse(source_code)
+    tree = None
+    try:
+        tree = ast.parse(source_code)
+    except SyntaxError:
+        return False
     
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -1703,8 +1703,12 @@ def analyze_file(file_path):
     with open(file_path, 'r') as file:
         source_code = file.read()
     
-    tree = ast.parse(source_code)
+    tree = None
     identifiers = set()
+    try:
+        tree = ast.parse(source_code)
+    except SyntaxError:
+        return identifiers
 
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef):
@@ -1724,27 +1728,6 @@ def analyze_file(file_path):
             identifiers.add(node.func.id)
 
     return identifiers
-
-
-# 추가한 부분 - 김위성 - 주석 부분 처리
-def update_line(line, old_name, new_name):
-    try:
-        comment = ''
-        if line.startswith("#") or line.startswith("'''") or line.startswith('"""'):
-            return line
-        
-        tokens = generate_tokens(line)
-        for token in tokens:
-            token_type = token.type
-            token_string = token.string
-
-            if token_type == tokenize.COMMENT or token_string.startswith("'''") or token_string.startswith('"""'):
-                comment = token_string
-                return line.replace(comment, '').replace(old_name, new_name).replace('\n','') + comment + '\n'
-    
-        return line.replace(comment, '').replace(old_name, new_name)
-    except tokenize.TokenError:
-        return line
 
 
 # 추가한 부분 - 김위성 - import하는 파일의 경로
@@ -1770,9 +1753,14 @@ def get_import_paths(project_path, file_path):
     with open(file_path, 'r') as file:
         source_code = file.read()
 
-    tree = ast.parse(source_code)
+    tree = None
     import_paths = []
     library_paths = []
+    
+    try:
+        tree = ast.parse(source_code)
+    except SyntaxError:
+        return library_paths
     
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
