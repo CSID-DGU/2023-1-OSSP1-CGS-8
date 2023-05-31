@@ -1737,10 +1737,10 @@ def check_class_def(code):
         for node in ast.walk(tree):
             # classDef 노드 확인
             if isinstance(node, ast.ClassDef):
-                return True
+                return False
     except SyntaxError:
         # 잘못된 구문
-        return True
+        return False
     return False
 
 # class명을 정규 표현식으로 추출하는 함수
@@ -1759,7 +1759,7 @@ def class_name_convention(logical_line, tokens):
 
     prev_end = (0, 0)
     for token_type, text, start, end, line in tokens:
-        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text):
+        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text) and check_class_def(line):
             not_recommand_class_name = extract_class_name(line)
             if not_recommand_class_name:
                 yield (start, "W701 class name is recommended CapitalizedWords")
@@ -1785,6 +1785,21 @@ def is_snakecase(word):
 
     return True
 
+# ast모듈을 통해 주어진 코드에서 function의 존재를 확인하는 함수
+def check_function_def(code):
+    try:
+        # 파싱
+        tree = ast.parse(code)
+        # 모든 노드 순회
+        for node in ast.walk(tree):
+            # classDef 노드 확인
+            if isinstance(node, ast.FunctionDef):
+                return False
+    except SyntaxError:
+        # 잘못된 구문
+        return False
+    return False
+
 # 함수명을 정규 표현식으로 추출하는 함수
 def extract_func_name(line):
     pattern = r"def\s+([A-Za-z0-9_]*)"
@@ -1798,7 +1813,7 @@ def extract_func_name(line):
 def func_name_convention(logical_line, tokens):    
     prev_end = (0, 0)
     for token_type, text, start, end, line in tokens:
-        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_snakecase(text) and "def" in line:
+        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_snakecase(text) and check_function_def(line):
             not_recommand_func_name = extract_func_name(line)
             if not_recommand_func_name:
                 yield (start, "W702 function name is recommended snake_case")
