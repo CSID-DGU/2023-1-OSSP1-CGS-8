@@ -1455,7 +1455,7 @@ class FixPEP8(object):
         fix_class_name = to_capitalized_words(class_name)
         
         # 수정한 부분 - 김위성 
-        if is_vaild_name(class_name, fix_class_name):
+        if is_valid_name(class_name, fix_class_name):
             origin_source = ''.join(self.source)
             self.source = modify_class_name(origin_source, class_name, fix_class_name)
 
@@ -1470,7 +1470,7 @@ class FixPEP8(object):
         fix_function_name = to_snake_case(function_name)
         
         # 수정한 부분 - 김위성
-        if is_vaild_name(function_name, fix_function_name):
+        if is_valid_name(function_name, fix_function_name):
             origin_source = ''.join(self.source)
             self.source = modify_function_name(origin_source, function_name, fix_function_name)
 
@@ -1478,7 +1478,7 @@ class FixPEP8(object):
 
 
 # 추가한 부분 - 김위성
-def is_vaild_name(origin_name, fixed_name):
+def is_valid_name(origin_name, fixed_name):
     
     if not (isinstance(origin_name, str) and isinstance(fixed_name, str)) : 
         return False
