@@ -13,7 +13,7 @@ def _get_indentation(line):
 def is_binary_operator(char):
     binary_operators = [
         "+", "-", "*", "/", "%", "**", "//", "==", "!=", ">", "<", ">=", "<=",
-        "and", "or", "in", "not in", "is", "is not"
+        "and", "or", "in", "not in", "is", "is not", "\\"
     ]
     
     return char in binary_operators or getattr(operator, char, None) is not None
