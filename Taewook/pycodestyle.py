@@ -1744,12 +1744,21 @@ def is_capwords(word):
 
     return True
 
+# class명을 정규 표현식으로 추출하는 함수
+def extract_class_name(line):
+    pattern = r"class\s+([A-Za-z0-9_]*)"
+    match = re.search(pattern, line)
+    if match:
+        class_name = match.group(1)
+        return class_name
+    return None
+
 @register_check
 def class_name_convention(logical_line, tokens):    
     prev_end = (0, 0)
     for token_type, text, start, end, line in tokens:
         if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text) and check_class_def(line):
-            not_recommand_class_name = line[:start[1]].strip()
+            not_recommand_class_name = extract_class_name(line)
             if not_recommand_class_name:
                 yield (start, "W701 class name is recommended CapitalizedWords")
         elif token_type != tokenize.NL:
