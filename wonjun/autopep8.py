@@ -1704,7 +1704,7 @@ def find_importing_files(project_path, target_file):
             file_path = os.path.join(root, file_name)
             if file_name.endswith('.py') and file_path != target_file_path:
                 if is_file_imported(file_path, target_file_name):
-                    importing_files.append(file_path)
+                    importing_files.add(file_path)
                     
     # iuput 파일이 import하는 파일(라이브러리)의 경우
     import_path = get_import_paths(project_path, target_file)
@@ -4398,9 +4398,10 @@ def fix_file(filename, options=None, output=None, apply_config=False):
                         + "계속하시겠습니까? [Y / N] : "
         command = input(warning_message)
         
+        # 추가한 부분 - 김위성 - 예외 처리
         if command.upper() == 'N':
             sys.exit()
-        if len(command) > 1:
+        elif command.upper() != 'Y':
             print('잘못 입력하였습니다.')
             sys.exit()
             
