@@ -1458,11 +1458,11 @@ class FixPEP8(object):
         fix_class_name = to_capitalized_words(class_name)
         
         # 수정한 부분 - 김위성 
-        if is_vaild_name(class_name, fix_class_name):
+        if is_valid_name(class_name, fix_class_name):
             origin_source = ''.join(self.source)
             self.source = modify_class_name(origin_source, class_name, fix_class_name)
-
-
+            
+    
     # 추가한 부분 (작명 컨벤션 - 함수)- 김위성
     def fix_w707(self, result):
         """fix function name"""
@@ -1473,7 +1473,7 @@ class FixPEP8(object):
         fix_function_name = to_snake_case(function_name)
         
         # 수정한 부분 - 김위성
-        if is_vaild_name(function_name, fix_function_name):
+        if is_valid_name(function_name, fix_function_name):
             origin_source = ''.join(self.source)
             self.source = modify_function_name(origin_source, function_name, fix_function_name)
 
@@ -1484,27 +1484,16 @@ class FixPEP8(object):
         cr = '\n'
         target = self.source[line_index]
         indent = _get_indentation(target)
-        next_index = len(indent)
-        end_line_index = line_index + 1
-        # 클래스의 정의가 끝나는 라인의 인덱스를 찾는 로직
-        for i in range(line_index + 1, len(self.source)):
-            check_indent = _get_indentation(self.source[i])
-            if (self.source[i] and check_indent == indent):
-                if (not self.source[i][next_index].isspace()):
-                    end_line_index = i - 1
-                    break
-            else:
-                continue
-        
+        end_line_index = self.find_end_line_index(line_index, indent)
+
         class_name = extract_class_name(target)
         fix_class_name = to_capitalized_words(class_name)
-        
-        if is_vaild_name(class_name, fix_class_name):
-            for i, s in enumerate(self.source):
-                self.source[i] = s.replace(class_name, fix_class_name)
+
+        if is_valid_name(class_name, fix_class_name):
+            self.apply_replacement(class_name, fix_class_name)
             input_code = indent + class_name + ' = ' + fix_class_name + cr
             self.source.insert(end_line_index, input_code)
-
+            
     # 추가한 부분 - 조원준
     def fix_w708(self, result):
         """add function aliasing"""
@@ -1512,29 +1501,44 @@ class FixPEP8(object):
         cr = '\n'
         target = self.source[line_index]
         indent = _get_indentation(target)
-        next_index = len(indent)
-        end_line_index = line_index + 1
-        # 함수의 정의가 끝나는 라인의 인덱스를 찾는 로직
-        for i in range(line_index + 1, len(self.source)):
-            check_indent = _get_indentation(self.source[i])
-            if (self.source[i] and check_indent == indent):
-                if (not self.source[i][next_index].isspace()):
-                    end_line_index = i - 1
-                    break
-            else:
-                continue
+        end_line_index = self.find_end_line_index(line_index, indent)
 
         function_name = extract_function_name(target)
         fix_function_name = to_snake_case(function_name)
-        
-        if is_vaild_name(function_name, fix_function_name):
-            for i, s in enumerate(self.source):
-                self.source[i] = s.replace(function_name, fix_function_name)
+
+        if is_valid_name(function_name, fix_function_name):
+            self.apply_replacement(function_name, fix_function_name)
             input_code = indent + function_name + ' = ' + fix_function_name + cr
             self.source.insert(end_line_index, input_code)
 
+    # 추가한 부분 - 조원준
+    def find_end_line_index(self, start_line_index, indent):
+        """Find the index of the line where the block ends"""
+        next_indent_level = len(indent)
+        end_line_index = start_line_index + 1
+
+        for i in range(start_line_index + 1, len(self.source)):
+            line = self.source[i]
+            line_indent = _get_indentation(line)
+
+            if not line.strip():
+                continue
+
+            if len(line_indent) <= next_indent_level:
+                end_line_index = i
+                break
+
+        return end_line_index
+
+    # 추가한 부분 - 조원준 - 이 부분 수정하면 됨.
+    def apply_replacement(self, old_name, new_name):
+        """Replace occurrences of old_name with new_name in the source code"""
+        for i, line in enumerate(self.source):
+            self.source[i] = line.replace(old_name, new_name)
+        
+
 # 추가한 부분 - 김위성
-def is_vaild_name(origin_name, fixed_name):
+def is_valid_name(origin_name, fixed_name):
     
     if not (isinstance(origin_name, str) and isinstance(fixed_name, str)) : 
         return False
