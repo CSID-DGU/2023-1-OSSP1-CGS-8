@@ -632,8 +632,16 @@ class FixPEP8(object):
         # 추가한 부분 - 이선호
         # 들여쓰기 커스텀 값이 존재하면 해당 값으로 변경
         if self.options.customize and Customize.get_attribute('indent_level'):
-            indent_level = int(Customize.get_attribute('indent_level'))
-            num_indent_spaces = (num_indent_spaces//4)*indent_level
+            ignore = False
+            value = Customize.get_attribute('indent_level_ignore')
+            if value and value.upper() == 'TRUE':
+                ignore = True
+            if not ignore:
+                try:
+                    indent_level = int(Customize.get_attribute('indent_level'))
+                    num_indent_spaces = (num_indent_spaces//4)*indent_level
+                except(ValueError):
+                    pass
         line_index = result['line'] - 1
         target = self.source[line_index]
         
@@ -641,20 +649,17 @@ class FixPEP8(object):
         # 리스트 닫는 괄호 스타일 설정 추가
         if (target.lstrip()[0] in ')}]' and Customize.use_customize()
             and Customize.get_attribute('list_bracket_style')):
-            #list_bracket_style_ignore
             ignore = False
-            if Customize.get_attribute('list_bracket_style_ignore'):
+            value = Customize.get_attribute('list_bracket_style_ignore')
+            if value and value.upper() == 'TRUE':
+                ignore = True
+            if not ignore:
                 try:
-                    ignore = bool(Customize.get_attribute('list_bracket_style_ignore'))
+                    list_bracket_style = int(Customize.get_attribute('list_bracket_style'))
+                    if list_bracket_style == 0:
+                        num_indent_spaces = len(_get_indentation(self.source[line_index-1]))
                 except(ValueError):
-                        print("Please enter a True or False value")
-            try:
-                list_bracket_style = int(Customize.get_attribute('list_bracket_style'))
-                if list_bracket_style == 0 and not ignore:
-                    num_indent_spaces = len(_get_indentation(self.source[line_index-1]))
-            except(ValueError):
-                pass
-
+                    pass
         self.source[line_index] = ' ' * num_indent_spaces + target.lstrip()
 
     def fix_e112(self, result):
@@ -709,8 +714,16 @@ class FixPEP8(object):
         # 추가한 부분 - 이선호
         # 들여쓰기 커스텀 값이 존재하면 해당 값으로 변경
         if self.options.customize and Customize.get_attribute('indent_level'):
-            indent_level = int(Customize.get_attribute('indent_level'))
-            num_indent_spaces = (num_indent_spaces//4)*indent_level
+            ignore = False
+            value = Customize.get_attribute('indent_level_ignore')
+            if value and value.upper() == 'TRUE':
+                ignore = True
+            if not ignore:
+                try:
+                    indent_level = int(Customize.get_attribute('indent_level'))
+                    num_indent_spaces = (num_indent_spaces//4)*indent_level
+                except(ValueError):
+                    pass
         line_index = result['line'] - 1
         target = self.source[line_index]
 
@@ -732,8 +745,16 @@ class FixPEP8(object):
         # 추가한 부분 - 이선호
         # 들여쓰기 커스텀 값이 존재하면 해당 값으로 변경
         if self.options.customize and Customize.get_attribute('indent_level'):
-            indent_level = int(Customize.get_attribute('indent_level'))
-            num_indent_spaces = (num_indent_spaces//4)*indent_level
+            ignore = False
+            value = Customize.get_attribute('max_line_length_ignore')
+            if value and value.upper() == 'TRUE':
+                ignore = True
+            if not ignore:
+                try:
+                    indent_level = int(Customize.get_attribute('indent_level'))
+                    num_indent_spaces = (num_indent_spaces//4)*indent_level
+                except(ValueError):
+                    pass
         line_index = result['line'] - 1
         target = self.source[line_index]
 
@@ -1897,7 +1918,16 @@ def _get_indentword(source):
     # 추가한 부분 - 이선호
     # indent_level 값에 따른 기본적인 들여쓰기 크기 지정
     if Customize.use_customize() and Customize.get_attribute('indent_level'):
-        indent_word = ' ' * int(Customize.get_attribute('indent_level'))
+            ignore = False
+            value = Customize.get_attribute('max_line_length_ignore')
+            if value and value.upper() == 'TRUE':
+                ignore = True
+            if not ignore:
+                try:
+                    indent_level = int(Customize.get_attribute('indent_level'))
+                    indent_word = ' ' * indent_level
+                except(ValueError):
+                    pass
     return indent_word
 
 
@@ -3947,47 +3977,40 @@ def parse_args(arguments, apply_config=False):
     if args.customize:
         Customize.parse_user_customize()
         if Customize.get_attribute('max_line_length'):
-            # max_line_length 설정을 무시
             ignore = False
-            if Customize.get_attribute('max_line_length_ignore'):          
+            value = Customize.get_attribute('max_line_length_ignore')
+            if value and value.upper() == 'TRUE':
+                ignore = True
+            if not ignore:
                 try:
-                    ignore = bool(Customize.get_attribute('max_line_length_ignore'))
+                    max_line_length = int(Customize.get_attribute('max_line_length'))
+                    if max_line_length > 0:
+                        args.max_line_length = max_line_length
                 except(ValueError):
-                        print("Please enter a True or False value")
-            try:
-                max_line_length = int(Customize.get_attribute('max_line_length'))
-                if max_line_length > 0 and not ignore:
-                    args.max_line_length = max_line_length
-            except(ValueError):
-                pass
+                    pass
           
         # 기본적인 들여쓰기 크기를 사용자 설정값으로 지정    
         if Customize.get_attribute('indent_level'):
-            #indent_level 설정을 무시
             ignore = False
-            if Customize.get_attribute('indent_level_ignore'):
+            value = Customize.get_attribute('indent_level_ignore')
+            if value and value.upper() == 'TRUE':
+                ignore = True
+            if not ignore:
                 try:
-                    ignore = bool(Customize.get_attribute('indent_level_ignore'))
+                    indent_level = int(Customize.get_attribute('indent_level'))
+                    if indent_level > 0:
+                        args.indent_size = indent_level
+                        global DEFAULT_INDENT_SIZE
+                        DEFAULT_INDENT_SIZE = indent_level
                 except(ValueError):
-                        print("Please enter a True or False value")
-            try:
-                indent_level = int(Customize.get_attribute('indent_level'))
-                if indent_level > 0 and not ignore:
-                    args.indent_size = indent_level
-                    global DEFAULT_INDENT_SIZE
-                    DEFAULT_INDENT_SIZE = indent_level
-            except(ValueError):
-                pass
-            
+                    pass
+        
         # 이항 연산자 줄바꿈 스타일 설정
         if Customize.get_attribute('binary_newline_style'):
-            #binary_newline_style_ignore
             ignore = False
-            if Customize.get_attribute('binary_newline_style_ignore'):
-                try:
-                    ignore = bool(Customize.get_attribute('binary_newline_style_ignore'))
-                except(ValueError):
-                        print("Please enter a True or False value")
+            value = Customize.get_attribute('binary_newline_style_ignore')
+            if value and value.upper() == 'TRUE':
+                ignore = True
             if not ignore:
                 try:
                     style = int(Customize.get_attribute('binary_newline_style'))
@@ -3999,26 +4022,6 @@ def parse_args(arguments, apply_config=False):
                         args.ignore += 'W504'
                 except(ValueError):
                     pass
-
-        """
-        # 추가한 부분 - 차재식
-        # singlequote <-> double quote 스타일 설정 
-        if Customize.get_attribute('string_quote_style'):
-            #string_quote_style_ignore
-            ignore = False
-            if Customize.get_attribute('string_quote_style_ignore'):
-                try:
-                    ignore = bool(Customize.get_attribute('string_quote_style_ignore'))
-                except(ValueError):
-                        print("Please enter a True or False value")
-            if not ignore:
-                try:
-                    #quote_style에 0인지 1인지 저장하여 fix_745함수에 인자값으로 넣는다
-                    quote_style = int(Customize.get_attribute('string_quote_style'))
-                    args.ignore += 'W745'
-                except(ValueError):
-                    pass
-        """
 
     if '-' in args.files:
         if len(args.files) > 1:
