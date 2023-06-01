@@ -639,27 +639,12 @@ class FixPEP8(object):
             if not ignore:
                 try:
                     indent_level = int(Customize.get_attribute('indent_level'))
-                    num_indent_spaces = (num_indent_spaces//4)*indent_level
+                    num_indent_spaces = (num_indent_spaces//4 + 1)*indent_level
                 except(ValueError):
                     pass
         line_index = result['line'] - 1
         target = self.source[line_index]
         
-        # 추가한 부분 - 이선호
-        # 리스트 닫는 괄호 스타일 설정 추가
-        if (target.lstrip()[0] in ')}]' and Customize.use_customize()
-            and Customize.get_attribute('list_bracket_style')):
-            ignore = False
-            value = Customize.get_attribute('list_bracket_style_ignore')
-            if value and value.upper() == 'TRUE':
-                ignore = True
-            if not ignore:
-                try:
-                    list_bracket_style = int(Customize.get_attribute('list_bracket_style'))
-                    if list_bracket_style == 0:
-                        num_indent_spaces = len(_get_indentation(self.source[line_index-1]))
-                except(ValueError):
-                    pass
         self.source[line_index] = ' ' * num_indent_spaces + target.lstrip()
 
     def fix_e112(self, result):
@@ -1522,8 +1507,9 @@ class Customize:
         # 사용자의 커스텀 정보를 저장할 딕셔너리
         custom_line = readlines_from_file('custom.txt')
         for line in custom_line:
-            key, value = line.split(':')
-            Customize.__custom_dict[key.strip()] = value.strip()
+            if line.strip() and len(line.split(':')) == 2:
+                key, value = line.split(':')
+                Customize.__custom_dict[key.strip()] = value.strip()
                 
     
     # 추가한 부분 - 이선호
@@ -4022,6 +4008,43 @@ def parse_args(arguments, apply_config=False):
                         args.ignore += 'W504'
                 except(ValueError):
                     pass
+                
+        # 추가한 부분 - 이선호
+        # 리스트 닫는 괄호 스타일 설정 추가
+        if Customize.get_attribute('list_bracket_style'):
+            ignore = False
+            value = Customize.get_attribute('list_bracket_style_ignore')
+            if value and value.upper() == 'TRUE':
+                ignore = True
+            if not ignore:
+                try:
+                    list_bracket_style = int(Customize.get_attribute('list_bracket_style'))
+                    if list_bracket_style == 0:
+                        args.hang_closing = True
+                except(ValueError):
+                    pass
+                
+                
+        # 추가한 부분 - 이선호
+        # 무시할 에러코드 argument 커스텀 추가
+        if Customize.get_attribute('ignore'):
+            ignore = False
+            value = Customize.get_attribute('ignore_ignore')
+            if value and value.upper() == 'TRUE':
+                ignore = True
+            if not ignore:
+                args.ignore = Customize.get_attribute('ignore')
+                
+        # 추가한 부분 - 이선호
+        # 선택적용할 에러코드 argument 커스텀 추가
+        if Customize.get_attribute('select'):
+            ignore = False
+            value = Customize.get_attribute('select_ignore')
+            if value and value.upper() == 'TRUE':
+                ignore = True
+            if not ignore:
+                args.select = Customize.get_attribute('select')
+
 
     if '-' in args.files:
         if len(args.files) > 1:
