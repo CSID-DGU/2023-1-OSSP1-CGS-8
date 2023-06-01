@@ -1,23 +1,64 @@
-# 함수에 대한 aliasing 예시
-def ex_one():
-    print('ex1입니다.')
-
-# ex_one 함수를 ExOne으로 aliasing 코드 추가
-ExOne = ex_one
-
-# 별칭된 함수 호출
-ExOne()  # 출력: ex1입니다.
-
-# 클래스에 대한 aliasing 예시
-class ExTwo:
-    def ex2_func(self):
+class ex_two:
+    def ExFunc(self):
+        print('ex2의 함수입니다.')
+        
+    def aliasing(self):
+        print('ex2의 함수입니다.')
+        
+    def FunctionAliasing(self):
         print('ex2의 함수입니다.')
 
-# ExTwo 클래스를 ex_two로 aliasing 코드 추가
+def ExOne():
+    print('ex1입니다.')
+
+def ExFour():
+    print('ex1입니다.')
+
+class ExThree:
+    def ex_func2(self):
+        return None
+
+
+# python autopep8.py -a -a -a test_aliasing2.py
+# python fix_bug.py -a -a -a test_aliasing2.py
+
+"""
+Aliasing 코드 삽입 결과
+class ExTwo:
+    def ex_func(self):
+        print('ex2의 함수입니다.')
+
+    ExFunc = ex_func
+
+    def aliasing(self):
+        print('ex2의 함수입니다.')
+
+    def function_aliasing(self):
+        print('ex2의 함수입니다.')
+
+    FunctionAliasing = function_aliasing
+
+
 ex_two = ExTwo
 
-# aliasing된 클래스 인스턴스 생성
-obj = ex_two()
 
-# aliasing된 클래스의 메서드 호출
-obj.ex2_func()  # 출력: ex2의 함수입니다.
+def ex_one():
+
+    print('ex1입니다.')
+
+
+ExOne = ex_one
+
+
+def ex_four():
+
+    print('ex1입니다.')
+
+
+ExFour = ex_four
+
+
+class ExThree:
+    def ex_func2(self):
+        return None
+"""
