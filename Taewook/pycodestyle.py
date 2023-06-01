@@ -1753,13 +1753,10 @@ def extract_class_name(line):
     return None
 
 @register_check
-def class_name_convention(logical_line, tokens):
-    if not check_class_def(logical_line):
-        return 
-
+def class_name_convention(logical_line, tokens):    
     prev_end = (0, 0)
     for token_type, text, start, end, line in tokens:
-        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text) and check_class_def(line):
+        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text):
             not_recommand_class_name = extract_class_name(line)
             if not_recommand_class_name:
                 yield (start, "W701 class name is recommended CapitalizedWords")
@@ -1836,7 +1833,7 @@ def string_single_quote(logical_line, tokens):
         if token_type == tokenize.STRING:
             not_recommend_single_quote = line[:start[1]].strip()
             if not_recommend_single_quote:
-                yield (start, "E744 double quotation marks are recommended for strings")
+                yield (start, "W744 double quotation marks are recommended for strings")
         elif token_type != tokenize.STRING:
             prev_end = end
             
@@ -1846,7 +1843,7 @@ def docstring_single_quote(logical_line, tokens):
     prev_end = (0,0)
     for token_type, text, start, end, line in tokens:
         if token_type == tokenize.STRING and (text.startswith("'''") or text.endswith("'''")):
-            yield (start, "E745 double quotation marks are recommended for docstrings")
+            yield (start, "W745 double quotation marks are recommended for docstrings")
         elif token_type != tokenize.STRING:
             prev_end = end
 
