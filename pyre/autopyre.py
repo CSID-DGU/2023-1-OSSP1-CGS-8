@@ -1481,7 +1481,10 @@ class FixPEP8(object):
 
 
 
-# 추가한 부분 - 김위성
+# 추가한 부분 - 김위성  
+# 보안 적용 - 변경한 이름을 적용할지 있는지 검증
+# isinstance()을 활용해 잘못된 type에 대한 검증 및 None 값 참조 오류 방지
+# islower(), isupper(), keyword.iskeyword()를 활용해 값에 대한 타당성 검증
 def is_valid_name(origin_name, fixed_name):
     
     if not (isinstance(origin_name, str) and isinstance(fixed_name, str)) : 
@@ -1502,7 +1505,7 @@ def is_valid_name(origin_name, fixed_name):
     return True
 
 
-# 추가한 부분 김위성
+# 추가한 부분 - 김위성 
 # 수정 - 조원준
 def is_snake_case(word):
     
@@ -1586,7 +1589,7 @@ def to_capitalized_words(word):
         return word
     
     elif is_snake_case(word): 
-        return string.capwords(word, sep='_').replace('_', '') 
+        return string.capwords(word, sep='_')
     
     elif is_mixed_word(word): 
         return word.replace('_', '')
@@ -1616,6 +1619,10 @@ def to_snake_case(word):
 
 # 추가한 부분 - 클래스 이름 추출
 def extract_class_name(code):
+    
+    if not isinstance(code, str): 
+        return None
+    
     pattern = r"class\s+(\w+)(?:\([^)]+\))?"
     match = re.search(pattern, code)
     if match:
@@ -1625,6 +1632,10 @@ def extract_class_name(code):
 
 # 추가한 부분 - 함수 이름 추출
 def extract_function_name(code):
+    
+    if not isinstance(code, str): 
+        return None
+    
     pattern = r"def\s+(\w+)\s*\("
     match = re.search(pattern, code)
     if match:
@@ -1678,7 +1689,10 @@ def find_importing_files(project_path, target_file):
     return importing_files
 
 
-# 추가한 부분 - 김위성 - 프로젝트내의 어떤 파일이 input파일을 import하는지 여부 
+# 추가한 부분 - 김위성 - 프로젝트내의 어떤 파일이 input파일을 import하는지 여부
+# 보안 적용 - 
+# 적절한 자원 반환 - with문 내의 코드에 예외가 발생하더라도 항상 파일 닫기가 보장 
+# 예외 처리 - try-except : 사용자가 syntax 에러가 있는 소스 코드에 대해 작명 컨벤션을 적용할 경우
 def is_file_imported(file_path, target_file):
     with open(file_path, 'r') as file:
         source_code = file.read()
