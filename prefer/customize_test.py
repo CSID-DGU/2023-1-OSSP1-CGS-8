@@ -641,12 +641,20 @@ class FixPEP8(object):
         # 리스트 닫는 괄호 스타일 설정 추가
         if (target.lstrip()[0] in ')}]' and Customize.use_customize()
             and Customize.get_attribute('list_bracket_style')):
+            #list_bracket_style_ignore
+            ignore = False
+            if Customize.get_attribute('list_bracket_style_ignore'):
+                try:
+                    ignore = bool(Customize.get_attribute('list_bracket_style_ignore'))
+                except(ValueError):
+                        print("Please enter a True or False value")
             try:
                 list_bracket_style = int(Customize.get_attribute('list_bracket_style'))
-                if list_bracket_style == 0:
+                if list_bracket_style == 0 and not ignore:
                     num_indent_spaces = len(_get_indentation(self.source[line_index-1]))
             except(ValueError):
                 pass
+
         self.source[line_index] = ' ' * num_indent_spaces + target.lstrip()
 
     def fix_e112(self, result):
@@ -3939,36 +3947,78 @@ def parse_args(arguments, apply_config=False):
     if args.customize:
         Customize.parse_user_customize()
         if Customize.get_attribute('max_line_length'):
+            # max_line_length 설정을 무시
+            ignore = False
+            if Customize.get_attribute('max_line_length_ignore'):          
+                try:
+                    ignore = bool(Customize.get_attribute('max_line_length_ignore'))
+                except(ValueError):
+                        print("Please enter a True or False value")
             try:
                 max_line_length = int(Customize.get_attribute('max_line_length'))
-                if max_line_length > 0:
+                if max_line_length > 0 and not ignore:
                     args.max_line_length = max_line_length
             except(ValueError):
                 pass
           
         # 기본적인 들여쓰기 크기를 사용자 설정값으로 지정    
         if Customize.get_attribute('indent_level'):
+            #indent_level 설정을 무시
+            ignore = False
+            if Customize.get_attribute('indent_level_ignore'):
+                try:
+                    ignore = bool(Customize.get_attribute('indent_level_ignore'))
+                except(ValueError):
+                        print("Please enter a True or False value")
             try:
                 indent_level = int(Customize.get_attribute('indent_level'))
-                if indent_level > 0:
+                if indent_level > 0 and not ignore:
                     args.indent_size = indent_level
                     global DEFAULT_INDENT_SIZE
                     DEFAULT_INDENT_SIZE = indent_level
             except(ValueError):
                 pass
-        
+            
         # 이항 연산자 줄바꿈 스타일 설정
         if Customize.get_attribute('binary_newline_style'):
-            try:
-                style = int(Customize.get_attribute('binary_newline_style'))
-                if args.ignore != '':
-                    args.ignore += ','
-                if style == 0:
-                    args.ignore += 'W503'
-                else:
-                    args.ignore += 'W504'
-            except(ValueError):
-                pass
+            #binary_newline_style_ignore
+            ignore = False
+            if Customize.get_attribute('binary_newline_style_ignore'):
+                try:
+                    ignore = bool(Customize.get_attribute('binary_newline_style_ignore'))
+                except(ValueError):
+                        print("Please enter a True or False value")
+            if not ignore:
+                try:
+                    style = int(Customize.get_attribute('binary_newline_style'))
+                    if args.ignore != '':
+                        args.ignore += ','
+                    if style == 0:
+                        args.ignore += 'W503'
+                    else:
+                        args.ignore += 'W504'
+                except(ValueError):
+                    pass
+
+        """
+        # 추가한 부분 - 차재식
+        # singlequote <-> double quote 스타일 설정 
+        if Customize.get_attribute('string_quote_style'):
+            #string_quote_style_ignore
+            ignore = False
+            if Customize.get_attribute('string_quote_style_ignore'):
+                try:
+                    ignore = bool(Customize.get_attribute('string_quote_style_ignore'))
+                except(ValueError):
+                        print("Please enter a True or False value")
+            if not ignore:
+                try:
+                    #quote_style에 0인지 1인지 저장하여 fix_745함수에 인자값으로 넣는다
+                    quote_style = int(Customize.get_attribute('string_quote_style'))
+                    args.ignore += 'W745'
+                except(ValueError):
+                    pass
+        """
 
     if '-' in args.files:
         if len(args.files) > 1:

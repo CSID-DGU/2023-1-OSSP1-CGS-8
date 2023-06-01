@@ -1,5 +1,10 @@
 max_line_length:100
+max_line_length_ignore:False
 indent_level:1
+indent_level_ignore:False
 list_bracket_style:0
+list_bracket_style_ignore:False
 binary_newline_style:0
-docstring_quote_style:0
+binary_newline_style_ignore:False
+string_quote_style:0
+string_quote_style_ignore:False
