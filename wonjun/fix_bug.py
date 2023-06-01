@@ -1484,13 +1484,14 @@ class FixPEP8(object):
         cr = '\n'
         target = self.source[line_index]
         indent = _get_indentation(target)
+        offset = result['column'] - 1
         end_line_index = self.find_end_line_index(line_index, indent)
 
         class_name = extract_class_name(target)
         fix_class_name = to_capitalized_words(class_name)
 
         if is_valid_name(class_name, fix_class_name):
-            self.apply_replacement(class_name, fix_class_name)
+            self.source[line_index] = self.source[line_index][:offset] + fix_class_name + self.source[line_index][len(class_name) + offset:]
             input_code = indent + class_name + ' = ' + fix_class_name + cr
             self.source.insert(end_line_index, input_code)
             
@@ -1501,13 +1502,14 @@ class FixPEP8(object):
         cr = '\n'
         target = self.source[line_index]
         indent = _get_indentation(target)
+        offset = result['column'] - 1
         end_line_index = self.find_end_line_index(line_index, indent)
 
         function_name = extract_function_name(target)
         fix_function_name = to_snake_case(function_name)
 
         if is_valid_name(function_name, fix_function_name):
-            self.apply_replacement(function_name, fix_function_name)
+            self.source[line_index] = self.source[line_index][:offset] + fix_function_name + self.source[line_index][len(function_name) + offset:]
             input_code = indent + function_name + ' = ' + fix_function_name + cr
             self.source.insert(end_line_index, input_code)
 
@@ -1529,12 +1531,6 @@ class FixPEP8(object):
                 break
 
         return end_line_index
-
-    # 추가한 부분 - 조원준 - 이 부분 수정하면 됨.
-    def apply_replacement(self, old_name, new_name):
-        """Replace occurrences of old_name with new_name in the source code"""
-        for i, line in enumerate(self.source):
-            self.source[i] = line.replace(old_name, new_name)
         
 
 # 추가한 부분 - 김위성
