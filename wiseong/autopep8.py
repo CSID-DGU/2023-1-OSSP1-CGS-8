@@ -1458,6 +1458,8 @@ class FixPEP8(object):
         if is_valid_name(class_name, fix_class_name):
             origin_source = ''.join(self.source)
             self.source = modify_class_name(origin_source, class_name, fix_class_name)
+            global all_origin_identifiers
+            all_origin_identifiers.update([fix_class_name])
 
 
     # 추가한 부분 (작명 컨벤션 - 함수)- 김위성
@@ -1473,6 +1475,8 @@ class FixPEP8(object):
         if is_valid_name(function_name, fix_function_name):
             origin_source = ''.join(self.source)
             self.source = modify_function_name(origin_source, function_name, fix_function_name)
+            global all_origin_identifiers
+            all_origin_identifiers.update([fix_function_name])
 
 
 
