@@ -61,6 +61,7 @@ from fnmatch import fnmatch
 from functools import lru_cache
 from optparse import OptionParser
 from tabulate import tabulate
+import ast
 
 # this is a performance hack.  see https://bugs.python.org/issue43014
 if (
@@ -1727,17 +1728,47 @@ def is_capwords(word):
 
     return True
 
+# 추가한 부분 - 하지은 / colon check
+def is_colon(word):
+    if ':' in word:
+        return True
+    
+    return False
+
 @register_check
-def class_name_convention(logical_line, tokens):    
+def class_name_convention(logical_line, tokens):
     prev_end = (0, 0)
+    prev_token_type = None  # 이전 토큰의 타입을 저장할 변수 추가
+    token_start = None # 클래스명을 저장할 변수 추가
+    
     for token_type, text, start, end, line in tokens:
-        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text) and "class" in line:
+        if token_type == tokenize.NAME and text in keyword.kwlist:
+            prev_token_type == token_type
+        elif token_type != tokenize.NL:
+            prev_end = end
+        elif token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text) and prev_token_type == tokenize.NAME:
             not_recommend_class_name = line[:start[1]].strip()
             if not_recommend_class_name:
+                token_start = start
+        elif token_type == tokenize.OP and is_colon(text):
+            yield (token_start, "W701 class name is recommended CapitalizedWords")
+    
+'''
+@register_check
+def class_name_convention(logical_line, tokens):
+    if not check_class_def(logical_line):
+        return 
+
+    prev_end = (0, 0)
+    for token_type, text, start, end, line in tokens:
+        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text):
+            not_recommand_class_name = extract_class_name(line)
+            if not_recommand_class_name:
                 yield (start, "W701 class name is recommended CapitalizedWords")
         elif token_type != tokenize.NL:
             prev_end = end
-            
+'''        
+
 # 추가한 부분 - 김태욱 / function name
 def is_snakecase(word):
     
@@ -1765,6 +1796,7 @@ def func_name_convention(logical_line, tokens):
             not_recommend_func_name = line[:start[1]].strip()
             if not_recommend_func_name:
                 yield (start, "W702 function name is recommended snake_case")
+            return
         elif token_type != tokenize.NL:
             prev_end = end
 
