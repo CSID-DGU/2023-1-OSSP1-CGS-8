@@ -85,9 +85,10 @@ import warnings
 import ast
 from configparser import ConfigParser as SafeConfigParser, Error
 
-import pycodestyle
-from pycodestyle import STARTSWITH_INDENT_STATEMENT_REGEX
+import pyrestyle
+from pyrestyle import STARTSWITH_INDENT_STATEMENT_REGEX
 
+import libcst as cst # pip install libcst
 
 __version__ = '2.0.2'
 
@@ -149,11 +150,11 @@ CODE_TO_2TO3 = {
 
 
 if sys.platform == 'win32':  # pragma: no cover
-    DEFAULT_CONFIG = os.path.expanduser(r'~\.pycodestyle')
+    DEFAULT_CONFIG = os.path.expanduser(r'~\.pyrestyle')
 else:
     DEFAULT_CONFIG = os.path.join(os.getenv('XDG_CONFIG_HOME') or
                                   os.path.expanduser('~/.config'),
-                                  'pycodestyle')
+                                  'pyrestyle')
 # fallback, use .pep8
 if not os.path.exists(DEFAULT_CONFIG):  # pragma: no cover
     if sys.platform == 'win32':
@@ -165,6 +166,11 @@ PROJECT_CONFIG = ('setup.cfg', 'tox.ini', '.pep8', '.flake8')
 
 MAX_PYTHON_FILE_DETECTION_BYTES = 1024
 
+
+# 추가한 부분 - 김위성 - 프로젝트 내에서 input파일과 import하고 있는 파일들의 identifiers
+all_origin_identifiers = None
+# 추가한 부분 - 김위성 - 다른 파일에서 참조되고 있는지
+all_origin_referenced = None
 
 def open_with_encoding(filename, mode='r', encoding=None, limit_byte_check=-1):
     """Return opened file with a specific encoding."""
@@ -203,9 +209,9 @@ def extended_blank_lines(logical_line,
                          previous_logical):
     """Check for missing blank lines after class declaration."""
     if previous_logical.startswith('def '):
-        if blank_lines and pycodestyle.DOCSTRING_REGEX.match(logical_line):
+        if blank_lines and pyrestyle.DOCSTRING_REGEX.match(logical_line):
             yield (0, 'E303 too many blank lines ({})'.format(blank_lines))
-    elif pycodestyle.DOCSTRING_REGEX.match(previous_logical):
+    elif pyrestyle.DOCSTRING_REGEX.match(previous_logical):
         # Missing blank line between class docstring and method declaration.
         if (
             indent_level and
@@ -217,7 +223,7 @@ def extended_blank_lines(logical_line,
             yield (0, 'E301 expected 1 blank line, found 0')
 
 
-pycodestyle.register_check(extended_blank_lines)
+pyrestyle.register_check(extended_blank_lines)
 
 
 def continued_indentation(logical_line, tokens, indent_level, hang_closing,
@@ -275,7 +281,7 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
             last_indent = start
 
             # Record the initial indent.
-            rel_indent[row] = pycodestyle.expand_indent(line) - indent_level
+            rel_indent[row] = pyrestyle.expand_indent(line) - indent_level
 
             # Identify closing bracket.
             close_bracket = (token_type == tokenize.OP and text in ']})')
@@ -401,7 +407,7 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
     if (
         indent_next and
         not last_line_begins_with_multiline and
-        pycodestyle.expand_indent(line) == indent_level + DEFAULT_INDENT_SIZE
+        pyrestyle.expand_indent(line) == indent_level + DEFAULT_INDENT_SIZE
     ):
         pos = (start[0], indent[0] + 4)
         desired_indent = indent_level + 2 * DEFAULT_INDENT_SIZE
@@ -411,8 +417,8 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
             yield (pos, 'E125 {}'.format(desired_indent))
 
 
-del pycodestyle._checks['logical_line'][pycodestyle.continued_indentation]
-pycodestyle.register_check(continued_indentation)
+del pyrestyle._checks['logical_line'][pyrestyle.continued_indentation]
+pyrestyle.register_check(continued_indentation)
 
 
 class FixPEP8(object):
@@ -518,6 +524,19 @@ class FixPEP8(object):
         self.fix_e703 = self.fix_e702
         self.fix_w292 = self.fix_w291
         self.fix_w293 = self.fix_w291
+        
+        # 추가한 부분 김위성
+        # 작명 컨벤션 aggressive 3레벨 일 경우와 experimental일 경우에만 실행
+        # 추가한 부분 - 조원준
+        # 작명 컨벤션 --alias 옵션 추가
+        if options and (options.aggressive >= 3 or options.experimental):
+            if options.alias:
+                self.fix_w701 = self.fix_w706
+                self.fix_w702 = self.fix_w708
+            else:
+                self.fix_w701 = self.fix_w705
+                self.fix_w702 = self.fix_w707
+
 
     def _fix_source(self, results):
         try:
@@ -797,7 +816,7 @@ class FixPEP8(object):
             if not check_syntax(fixed.lstrip()):
                 return
             errors = list(
-                pycodestyle.missing_whitespace_around_operator(fixed, ts))
+                pyrestyle.missing_whitespace_around_operator(fixed, ts))
             for e in reversed(errors):
                 if error_code != e[1].split()[0]:
                     continue
@@ -1474,6 +1493,547 @@ class FixPEP8(object):
                                                                  self.source)
         self.source[line_index] = '{}\\{}'.format(
             target[:offset + 1], target[offset + 1:])
+        
+    # 추가한 부분 (작명 컨벤션 - 클래스 이름) - 김위성
+    def fix_w705(self, result):
+        """fix class name"""
+        line_index = result['line'] - 1
+        target = self.source[line_index]
+        
+        class_name = extract_class_name(target)
+        fix_class_name = to_capitalized_words(class_name)
+        
+        # 수정한 부분 - 김위성 
+        if is_valid_name(class_name, fix_class_name):
+            origin_source = ''.join(self.source)
+            self.source = modify_class_name(origin_source, class_name, fix_class_name)
+            global all_origin_identifiers
+            all_origin_identifiers.update([fix_class_name])
+
+
+    # 추가한 부분 (작명 컨벤션 - 함수)- 김위성
+    def fix_w707(self, result):
+        """fix function name"""
+        line_index = result['line'] - 1
+        target = self.source[line_index]
+
+        function_name = extract_function_name(target)
+        fix_function_name = to_snake_case(function_name)
+        
+        # 수정한 부분 - 김위성
+        if is_valid_name(function_name, fix_function_name):
+            origin_source = ''.join(self.source)
+            self.source = modify_function_name(origin_source, function_name, fix_function_name)
+            global all_origin_identifiers
+            all_origin_identifiers.update([fix_function_name])
+            
+            
+    # 추가한 부분 (Aliasing - class) - 조원준
+    def fix_w706(self, result):
+        """add class aliasing"""
+        line_index = result['line'] - 1
+        cr = '\n'
+        target = self.source[line_index]
+        indent = _get_indentation(target)
+        offset = result['column'] - 1
+        end_line_index = self.find_end_line_index(line_index, indent)
+
+        class_name = extract_class_name(target)
+        fix_class_name = to_capitalized_words(class_name)
+
+        if is_valid_name(class_name, fix_class_name):
+            self.source[line_index] = self.source[line_index][:offset] + fix_class_name + self.source[line_index][len(class_name) + offset:]
+            input_code = indent + class_name + ' = ' + fix_class_name + cr
+            self.source.insert(end_line_index, input_code)
+            global all_origin_identifiers
+            all_origin_identifiers.update([fix_class_name])
+            
+            
+    # 추가한 부분 (Aliasing - function) - 조원준
+    def fix_w708(self, result):
+        """add function aliasing"""
+        line_index = result['line'] - 1
+        cr = '\n'
+        target = self.source[line_index]
+        indent = _get_indentation(target)
+        offset = result['column'] - 1
+        end_line_index = self.find_end_line_index(line_index, indent)
+
+        function_name = extract_function_name(target)
+        fix_function_name = to_snake_case(function_name)
+
+        if is_valid_name(function_name, fix_function_name):
+            self.source[line_index] = self.source[line_index][:offset] + fix_function_name + self.source[line_index][len(function_name) + offset:]
+            input_code = indent + function_name + ' = ' + fix_function_name + cr
+            self.source.insert(end_line_index, input_code)
+            global all_origin_identifiers
+            all_origin_identifiers.update([fix_function_name])
+            
+            
+    # 추가한 부분 - 조원준
+    def find_end_line_index(self, start_line_index, indent):
+        """Find the index of the line where the block ends"""
+        next_indent_level = len(indent)
+        end_line_index = start_line_index + 1
+
+        for i in range(start_line_index + 1, len(self.source)):
+            line = self.source[i]
+            line_indent = _get_indentation(line)
+
+            if not line.strip():
+                continue
+
+            if len(line_indent) <= next_indent_level:
+                end_line_index = i
+                break
+
+        return end_line_index        
+
+
+# 추가한 부분 - 김위성  
+# 보안 적용 - 변경한 이름을 적용할지 있는지 검증
+# isinstance()을 활용해 잘못된 type에 대한 검증 및 None 값 참조 오류 방지
+# islower(), isupper(), keyword.iskeyword()를 활용해 값에 대한 타당성 검증
+def is_valid_name(origin_name, fixed_name):
+    
+    if not (isinstance(origin_name, str) and isinstance(fixed_name, str)) : 
+        return False
+    
+    # 변경할 이름이 키워드 인 경우
+    if keyword.iskeyword(fixed_name): 
+        return False
+    
+    # 변경할 이름이 이미 사용되고 있는 경우
+    if fixed_name in all_origin_identifiers: 
+        return False
+    
+    # 본래 이름이 다른 파일에서 참조되고 있는 경우
+    if origin_name in all_origin_referenced: 
+        return False
+    
+    return True
+
+
+
+# 추가한 부분 - 김위성 
+# 수정 - 조원준
+def is_snake_case(word):
+    
+    if not isinstance(word, str): 
+        return False
+    
+    elif not word[0].islower():
+        return False
+    
+    elif not all(char.islower() or char == '_' for char in word):
+        return False
+    
+    elif '__' in word:    # 던더
+        return False
+    
+    elif word in keyword.kwlist:
+        return False
+    
+    return True
+
+
+# 추가 - 조원준
+# CapWords인지 확인
+def is_cap_word(word):
+    
+    if not isinstance(word,str): 
+        return False
+    
+    elif '_' in word:
+        return False
+    
+    elif not word[0].isupper():
+        return False
+    
+    return True
+
+
+# 수정 - 조원준
+# CapWords는 아니지만 camel case인지 확인
+def is_camel_case(word):
+    
+    if not isinstance(word, str): 
+        return False
+    
+    elif '_' in word:
+        return False
+    
+    elif word[0].isupper():
+        return False
+    
+    return True
+
+
+# 추가 - 조원준
+# mixed_word임을 판별
+def is_mixed_word(word):
+    
+    if not isinstance(word, str): 
+        return False
+    
+    elif '_' not in word:
+        return False
+    
+    elif all(char.islower() or char == '_' for char in word):
+        return False
+    
+    return True
+
+
+# 추가한 부분 - 김위성
+def to_capitalized_words(word):
+    """return capitalized words
+    
+    class naming convention
+    """
+    
+    if not isinstance(word, str): 
+        return None
+    
+    elif word[0] == '_': 
+        return word
+    
+    elif is_snake_case(word): 
+        return string.capwords(word, sep='_')
+    
+    elif is_mixed_word(word): 
+        return word.replace('_', '')
+    
+    return word[0].upper() + word[1:]
+
+
+# 추가한 부분 - 김위성
+# 수정 - 조원준
+def to_snake_case(word):
+    """return snake case
+    
+    method naming convention
+    """
+    
+    if not isinstance(word, str): 
+        return None
+    
+    if is_camel_case(word) or is_cap_word(word):   
+        return re.sub(r'(?<!^)(?=[A-Z])', '_', word).lower()
+    
+    elif is_mixed_word(word):
+        return word.lower()
+    
+    return word
+
+
+# 추가한 부분 - 클래스 이름 추출
+def extract_class_name(code):
+    
+    if not isinstance(code, str): 
+        return None
+    
+    pattern = r"class\s+(\w+)(?:\([^)]+\))?"
+    match = re.search(pattern, code)
+    if match:
+        return match.group(1)
+    return None
+
+
+# 추가한 부분 - 함수 이름 추출
+def extract_function_name(code):
+    
+    if not isinstance(code, str): 
+        return None
+    
+    pattern = r"def\s+(\w+)\s*\("
+    match = re.search(pattern, code)
+    if match:
+        return match.group(1)
+    return None
+
+
+# 추가한 부분 - 김위성 - 프로젝트의 경로
+def get_project_path():
+    script_path = os.path.abspath(__file__)
+    project_path = os.path.dirname(os.path.dirname(script_path))
+    return project_path
+
+
+# 추가한 부분 - 김위성 - import 하고 있는 파일과 해당 파일의 모든 식별자와 참조되는 식별자
+def find_all_identifiers(project_path, target_file):
+    identifiers = set()
+    referenced = set()
+    
+    # Collect identifiers from target file
+    target_identifiers = analyze_file(target_file)
+    identifiers.update(target_identifiers)
+    
+    # Find importing files
+    importing_files = find_importing_files(project_path, target_file)
+    
+    # Collect identifiers from importing files
+    for file_path in importing_files:
+        file_referenced = analyze_file(file_path)
+        referenced.update(file_referenced)
+    return identifiers, referenced
+
+
+# 추가한 부분 - 김위성 - import하고 있는 파일
+def find_importing_files(project_path, target_file):
+    target_file_name = os.path.splitext(os.path.basename(target_file))[0]
+    importing_files = set()
+    target_file_path = get_file_path(project_path, target_file)
+    
+    for root, dirs, files in os.walk(project_path):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            if file_name.endswith('.py') and file_path != target_file_path:
+                # iuput 파일이 import되고 있는 경우
+                if is_file_imported(file_path, target_file_name): 
+                    importing_files.add(file_path)
+    
+    # iuput 파일이 import하는 파일(라이브러리)의 경우
+    import_path = get_import_paths(project_path, target_file)
+    importing_files.update(import_path)
+    return importing_files
+
+
+# 추가한 부분 - 김위성 - 프로젝트내의 어떤 파일이 input파일을 import하는지 여부
+# 보안 적용 - 
+# 적절한 자원 반환 - with문 내의 코드에 예외가 발생하더라도 항상 파일 닫기가 보장 
+# 예외 처리 - try-except : 사용자가 syntax 에러가 있는 소스 코드에 대해 작명 컨벤션을 적용할 경우
+def is_file_imported(file_path, target_file):
+    with open(file_path, 'r') as file:
+        source_code = file.read()
+    
+    tree = None
+    try:
+        tree = ast.parse(source_code)
+    except SyntaxError:
+        return False
+    
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                imported_module = alias.name
+                if target_file == imported_module or '.' + target_file in imported_module:
+                    return True
+        elif isinstance(node, ast.ImportFrom):
+            if node.module == target_file or '.' + target_file in node.module:
+                return True
+
+    return False
+
+
+# 추가한 부분 - 김위성 - 식별자, 참조되는 식별자를 모두 저장
+def analyze_file(file_path):
+    with open(file_path, 'r') as file:
+        source_code = file.read()
+    
+    tree = None
+    identifiers = set()
+    try:
+        tree = ast.parse(source_code)
+    except SyntaxError:
+        return identifiers
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            # import하는 파일에서 상속하는 클래스
+            for base in node.bases:
+                if isinstance(base, ast.Name):
+                    identifiers.add(base.id)
+            identifiers.add(node.name)
+        elif isinstance(node, ast.FunctionDef):
+            identifiers.add(node.name)
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            identifiers.add(node.id)
+        elif isinstance(node, ast.arg):
+            identifiers.add(node.arg)
+        # import하는 파일에서 호출하는 함수
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            identifiers.add(node.func.id)
+
+    return identifiers
+
+
+# 추가한 부분 - 김위성 - import하는 파일의 경로
+def get_library_path(project_path, library_name):
+    library_path = None
+
+    for root, _, files in os.walk(project_path):
+        for file in files:
+            if file.endswith('.py'):
+                file_path = os.path.join(root, file)
+                if library_name + '.py' in file_path:
+                    library_path = file_path
+                    break
+        
+        if library_path is not None:
+            break
+
+    return library_path
+
+
+# 추가한 부분 - 김위성 - import하는 파일, import되는 파일
+def get_import_paths(project_path, file_path):
+    with open(file_path, 'r') as file:
+        source_code = file.read()
+
+    tree = None
+    import_paths = []
+    library_paths = []
+    
+    try:
+        tree = ast.parse(source_code)
+    except SyntaxError:
+        return library_paths
+    
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                import_paths.append(alias.name)
+
+        elif isinstance(node, ast.ImportFrom):
+            module_name = node.module if node.module else ''
+            import_paths.append(module_name)
+
+                
+    for import_path in import_paths:
+        if "." in import_path:
+            import_path = import_path.split('.')[-1]
+
+        library_path = get_library_path(project_path, import_path)
+        
+        if library_path is None: continue
+        if library_path.startswith(project_path):
+
+            library_paths.append(library_path)
+        
+    return library_paths
+
+
+# 추가한 부분 - 김위성 - input 파일의 경로를 가져온다.
+def get_file_path(project_path, file_name):
+    for root, _, files in os.walk(project_path):
+        for file in files:
+            if file == file_name:
+                return os.path.join(root, file)
+
+    return None
+
+
+# 추가한 부분 - 김위성 - cst를 활용한 클래스 이름 변경 클래스
+class ClassNameTransformer(cst.CSTTransformer):
+    def __init__(self, rename_pairs):
+        self.rename_pairs = rename_pairs
+
+    def leave_ClassDef(self, original_node, updated_node):
+        
+        if original_node.name.value in self.rename_pairs:
+            updated_node = updated_node.with_changes(name=cst.Name(value=self.rename_pairs[original_node.name.value]))
+        
+        updated_bases = []
+        for base in updated_node.bases:
+            if isinstance(base, cst.Arg) and isinstance(base.value, cst.Name) and base.value.value in self.rename_pairs:
+                updated_value = base.value.with_changes(value=self.rename_pairs[base.value.value])
+                updated_base = base.with_changes(value=updated_value)
+                updated_bases.append(updated_base)
+            else:
+                updated_bases.append(base)
+        updated_node = updated_node.with_changes(bases=updated_bases)
+
+        return updated_node
+
+    def leave_Attribute(self, original_node, updated_node):
+        
+        if isinstance(updated_node.value, cst.Name) and updated_node.value.value in self.rename_pairs:
+            updated_value = updated_node.value.with_changes(value=self.rename_pairs[updated_node.value.value])
+            updated_node = updated_node.with_changes(value=updated_value)
+
+        return updated_node
+    
+    def leave_Call(self, original_node, updated_node):
+        
+        if isinstance(updated_node.func, cst.Name) and updated_node.func.value in self.rename_pairs:
+            updated_func = updated_node.func.with_changes(value=self.rename_pairs[updated_node.func.value])
+            updated_node = updated_node.with_changes(func=updated_func)
+
+        return updated_node
+    
+    def leave_Assign(self, original_node, updated_node):
+        
+        if isinstance(updated_node.value, cst.Name) and updated_node.value.value in self.rename_pairs:
+            updated_value = updated_node.value.with_changes(value=self.rename_pairs[updated_node.value.value])
+            updated_node = updated_node.with_changes(value=updated_value)
+
+        return updated_node
+
+
+# 추가한 부분 - 김위성 - cst를 활용한 함수 이름 변경 클래스
+class FunctionNameTransformer(cst.CSTTransformer):
+    def __init__(self, rename_pairs):
+        self.rename_pairs = rename_pairs
+
+    def leave_FunctionDef(self, original_node, updated_node):
+        
+        if original_node.name.value in self.rename_pairs:
+            updated_node = updated_node.with_changes(name=cst.Name(value=self.rename_pairs[original_node.name.value]))
+
+        return updated_node
+    
+    def leave_Attribute(self, original_node, updated_node):
+        
+        if isinstance(updated_node.attr, cst.Name) and updated_node.attr.value in self.rename_pairs:
+            updated_attr = updated_node.attr.with_changes(value=self.rename_pairs[updated_node.attr.value])
+            updated_node = updated_node.with_changes(attr=updated_attr)
+
+        return updated_node
+
+    def leave_Call(self, original_node, updated_node):
+        
+        if isinstance(updated_node.func, cst.Name) and updated_node.func.value in self.rename_pairs:
+            updated_func = updated_node.func.with_changes(value=self.rename_pairs[updated_node.func.value])
+            updated_node = updated_node.with_changes(func=updated_func)
+
+        return updated_node
+    
+    def leave_Assign(self, original_node, updated_node):
+        
+        if isinstance(updated_node.value, cst.Name) and updated_node.value.value in self.rename_pairs:
+            updated_value = updated_node.value.with_changes(value=self.rename_pairs[updated_node.value.value])
+            updated_node = updated_node.with_changes(value=updated_value)
+
+        return updated_node
+
+
+# 추가한 부분 - 김위성 - cst를 활용한 클래스 이름 변경
+def modify_class_name(source_code, old_name, new_name):
+    rename_candidates = {
+        old_name: new_name,
+    }
+    
+    rename_transformer = ClassNameTransformer(rename_candidates)
+    module = cst.parse_module(source_code)
+    
+    renamed_tree = module.visit(rename_transformer)
+    modified_module = renamed_tree.code
+    return modified_module.splitlines(keepends=True)
+
+
+# 추가한 부분 - 김위성 - cst를 활용한 클래스 함수 이름 변경
+def modify_function_name(source_code, old_name, new_name):
+    rename_candidates = {
+        old_name: new_name,
+    }
+    
+    rename_transformer = FunctionNameTransformer(rename_candidates)
+    module = cst.parse_module(source_code)
+    
+    renamed_tree = module.visit(rename_transformer)
+    modified_module = renamed_tree.code
+    return modified_module.splitlines(keepends=True)
 
 
 # 추가한 부분 - 이선호
@@ -1608,7 +2168,7 @@ def get_module_imports_on_top_of_file(source, import_line_index):
                 # move to the back
                 return cnt + offset + 1
             return cnt
-        elif pycodestyle.DUNDER_REGEX.match(line):
+        elif pyrestyle.DUNDER_REGEX.match(line):
             return cnt
         elif any(line.startswith(kw) for kw in allowed_try_keywords):
             continue
@@ -1954,6 +2514,11 @@ def _priority_key(pep8_result):
 
     """
     priority = [
+        # 먼저 바꿔줘야 import로 인한 라인 브레이킹 문제가 없어진다.
+        # 추가한 부분 - 김위성 - 클래스 이름
+        'w701',
+        # 추가한 부분 - 김위성 - 함수 이름
+        'w702',
         # Fix multiline colon-based before semicolon based.
         'e701',
         # Break multiline statements early.
@@ -3045,7 +3610,7 @@ def fix_whitespace(line, offset, replacement):
 
 def _execute_pep8(pep8_options, source):
     """Execute pycodestyle via python method calls."""
-    class QuietReport(pycodestyle.BaseReport):
+    class QuietReport(pyrestyle.BaseReport):
 
         """Version of checker that does not print."""
 
@@ -3075,7 +3640,7 @@ def _execute_pep8(pep8_options, source):
             """
             return self.__full_error_results
 
-    checker = pycodestyle.Checker('', lines=source, reporter=QuietReport,
+    checker = pyrestyle.Checker('', lines=source, reporter=QuietReport,
                                   **pep8_options)
     checker.check_all()
     return checker.report.full_error_results()
@@ -3686,6 +4251,32 @@ def fix_file(filename, options=None, output=None, apply_config=False):
     if not options:
         options = parse_args([filename], apply_config=apply_config)
 
+    # 추가한 부분 - 김위성 - aggressive 3레벨 이상이거나 experimental 옵션일 경우
+    # input 파일 포함, import하고 있는 파일들의 식별자까지 모두 가져옴
+    if options and (options.aggressive >= 3 or options.experimental):
+        
+        # 추가한 부분 - 김위성 - 경고 메세지 (수정 필요)
+        warning_message = f"\n{'[Warning]':-^79}\n"\
+                        + "해당 옵션을 적용 시 PEP8 스타일 가이드에서 권장하는 클래스와 함수의 작명 규칙을 \n"\
+                        + "따르지 않을 경우 권장하는 스타일에 맞게 수정해줍니다. 귀하의 팀원들과 공유하는 \n"\
+                        + "특별한 작명 컨벤션이 있다면 수정을 권장하지 않습니다.\n"\
+                        + "계속하시겠습니까? [Y / N] : "
+        command = input(warning_message)
+        print()
+
+        # 추가한 부분 - 김위성 - 예외 처리
+        if command.upper() == 'N':
+            sys.exit()
+        elif command.upper() != 'Y':
+            print('잘못 입력하였습니다.')
+            sys.exit()
+            
+        global all_origin_identifiers 
+        global all_origin_referenced
+        project_path = get_project_path()
+        all_origin_identifiers, all_origin_referenced = find_all_identifiers(project_path, filename)
+        
+        
     original_source = readlines_from_file(filename)
 
     fixed_source = original_source
@@ -3816,7 +4407,7 @@ def extract_code_from_function(function):
 
 
 def _get_package_version():
-    packages = ["pycodestyle: {}".format(pycodestyle.__version__)]
+    packages = ["pyrestyle: {}".format(pyrestyle.__version__)]
     return ", ".join(packages)
 
 
@@ -3881,7 +4472,7 @@ def create_parser():
     parser.add_argument('--indent-size', default=DEFAULT_INDENT_SIZE,
                         type=int, help=argparse.SUPPRESS)
     parser.add_argument('--hang-closing', action='store_true',
-                        help='hang-closing option passed to pycodestyle')
+                        help='hang-closing option passed to pyrestyle')
     parser.add_argument('--exit-code', action='store_true',
                         help='change to behavior of exit code.'
                              ' default behavior of return value, 0 is no '
@@ -3894,6 +4485,11 @@ def create_parser():
     parser.add_argument('-c', '--customize', action='store_true',
                         help='Replace the formatting level'
                         ' with the value you set in custom.txt.')
+    
+    # 추가
+    parser.add_argument('--alias', action='store_true', default=0,
+                        help=''
+                        '')
 
     return parser
 
@@ -4121,7 +4717,9 @@ def parse_args(arguments, apply_config=False):
     elif not args.select:
         if args.aggressive:
             # Enable everything by default if aggressive.
-            args.select = {'E', 'W1', 'W2', 'W3', 'W6'}
+            # aggressive인 경우 w7 select해줌
+            # 추가한 부분 - 김위성
+            args.select = {'E', 'W1', 'W2', 'W3', 'W6', 'W7'}
         else:
             args.ignore = _split_comma_separated(DEFAULT_IGNORE)
 
@@ -4210,7 +4808,7 @@ def read_config(args, parser):
         option_list = {o.dest: o.type or type(o.default)
                        for o in parser._actions}
 
-        for section in ['pep8', 'pycodestyle', 'flake8']:
+        for section in ['pep8', 'pyrestyle', 'flake8']:
             if not config.has_section(section):
                 continue
             for norm_opt, k, value in _get_normalize_options(
@@ -4492,7 +5090,7 @@ def standard_deviation(numbers):
 
 def has_arithmetic_operator(line):
     """Return True if line contains any arithmetic operators."""
-    for operator in pycodestyle.ARITHMETIC_OP:
+    for operator in pyrestyle.ARITHMETIC_OP:
         if operator in line:
             return True
 
