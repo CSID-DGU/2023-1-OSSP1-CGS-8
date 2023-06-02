@@ -83,6 +83,7 @@ import token
 import tokenize
 import warnings
 import ast
+import operator
 from configparser import ConfigParser as SafeConfigParser, Error
 
 import pyrestyle
@@ -905,6 +906,25 @@ class FixPEP8(object):
 
         self.source[result['line'] - 1] = fixed
 
+    def fix_e267(self, result):
+        line_index = result['line'] - 1
+        target = self.source[line_index]
+        offset = result['column']- 1
+        comment = target[offset:].rstrip()
+        self.source[line_index] = target[:offset].rstrip()
+        
+        # 현재 줄이나 윗 줄에 줄 잇기의 형태가 존재하면 따로 수정x
+        if ((line_index == 0 and check_continuous_line(self.source[line_index], '')) or
+            (line_index > 0 and check_continuous_line(self.source[line_index],
+                                                    self.source[line_index - 1]))):
+            self.source[line_index] += ' ' + comment + '\n'
+        else:
+            # 암시적 줄 잇기가 시작되는 줄의 들여쓰기와 인라인 주석의
+            # 들여쓰기 수준 맞추기
+            indent_word = _get_indentation(self.source[line_index])
+            comment = indent_word + comment
+            self.source[line_index] = comment + '\n' + self.source[line_index] + '\n'    
+
     def fix_e271(self, result):
         """Fix extraneous whitespace around keywords."""
         line_index = result['line'] - 1
@@ -1025,6 +1045,63 @@ class FixPEP8(object):
             self.source[mod_offset] = line + self.source[mod_offset]
         for offset in range(i):
             self.source[line_index+offset] = ''
+
+    def fix_w744(self,result):
+        line_index = result['line'] - 1
+        target = self.source[line_index]
+        i =0 
+        check = False
+        # 해당 라인을 읽어와 ' 또는 " 로 시작하는지 확인
+        while i <len(target):
+            if target[i] == '"':
+                check = False
+                break
+            elif target[i] == "'":
+                check  = True
+                break
+            else:
+                i+=1
+        # 변환 해주는 작업
+        double_quote = {
+            ord('"') : "'",
+            ord("'") : '\"'
+        }
+        single_quote = {
+            ord("'") : '"',
+            ord('"') : "\'"
+        }
+        # 라인 업데이트
+        if check == False:
+            self.source[line_index] = target.translate(double_quote)            
+        else:
+            self.source[line_index] = target.translate(single_quote)
+
+    # 추가한 부분 - 차재식
+    # single_quote -> double_quote 변환
+    def fix_w745(self, result):
+        '''w745 docstring'''
+        line_index = result['line'] - 1
+        target = self.source[line_index]
+        end_index = line_index + 1
+        flag = False
+        try:
+            while True:
+                # 한줄인 경우
+                if target.strip().startswith("'''") and target.strip().endswith("'''"):
+                    # 차이값을 구해 줄에 '''만 있는지 확인
+                    if target.find("'''") != -1 and target.find("'''") != target.rfind("'''"):
+                        self.source[line_index] = self.source[line_index].replace("'''",'"""')
+                        break
+                # 다음 '''을 찾을 때 까지
+                if self.source[end_index].endswith("'''\n"):
+                    flag = True
+                if flag:
+                    self.source[line_index] =self.source[line_index].replace("'''", '"""')
+                    self.source[end_index] = self.source[end_index].replace("'''", '"""')
+                    break
+                end_index += 1
+        except IndexError:
+            pass
 
     def fix_long_line_logically(self, result, logical):
         """Try to make lines fit within --max-line-length characters."""
@@ -1488,6 +1565,7 @@ class FixPEP8(object):
         self.source[line_index + 1] = '{}{} {}'.format(
             next_line[:next_line_indent], target_operator,
             next_line[next_line_indent:])
+  
 
     def fix_w605(self, result):
         (line_index, offset, target) = get_index_offset_contents(result,
@@ -1590,6 +1668,70 @@ class FixPEP8(object):
 
         return end_line_index        
 
+
+# 추가한 부분 - 이선호
+# 이항 연산자인지 확인
+def is_binary_operator(char):
+    binary_operators = [
+        "+", "-", "*", "/", "%", "**", "//", "==", "!=", ">", "<", ">=", "<=",
+        "and", "or", "in", "not in", "is", "is not", "\\", ','
+    ]
+    
+    return char in binary_operators or getattr(operator, char, None) is not None
+
+
+# 추가한 부분 - 이선호
+# 단항 연산자인지 확인
+def is_unary_operator(char):
+    unary_operators = [
+        "+", "-", "~", "not"
+    ]
+    
+    return char in unary_operators or getattr(operator, char + " ", None) is not None
+
+
+# 추가한 부분 - 이선호
+# 현재 줄에 열린 괄호 개수 반환
+def count_open_bracket(line):
+    open_bracket = line.count('(')\
+        + line.count('{')\
+        + line.count('[')
+    return open_bracket
+
+
+# 추가한 부분 - 이선호
+# 현재 줄에 닫힌 괄호 개수 반환
+def count_close_bracket(line):
+    close_bracket = line.count(')')\
+        + line.count('}')\
+        + line.count(']')
+    return close_bracket
+
+
+# 추가한 부분 - 이선호
+# 현재 줄에 괄호 짝이 맞는지 여부와 단항, 이항 연산자 확인
+def check_continuous_line(line, upperline):
+    if upperline.strip() == '':
+        if ((count_open_bracket(line) != count_close_bracket(line)) or
+            is_binary_operator(line[-1]) or
+            is_unary_operator(line[-1]) or
+            is_binary_operator(line.lstrip()[0])):
+            return True
+        else:
+            return False
+    else:
+        if upperline.strip().rfind('#') != 0:
+            upperline = upperline[:upperline.rfind('#')].rstrip()
+        else: upperline = upperline.strip()
+        if ((count_open_bracket(line) != count_close_bracket(line)) or
+            is_binary_operator(line[-1]) or
+            is_unary_operator(line[-1]) or
+            is_binary_operator(line.lstrip()[0]) or
+            is_binary_operator(upperline[-1]) or
+            is_unary_operator(upperline[-1])):
+            return True
+        else:
+            return False
 
 # 추가한 부분 - 김위성  
 # 보안 적용 - 변경한 이름을 적용할지 있는지 검증
