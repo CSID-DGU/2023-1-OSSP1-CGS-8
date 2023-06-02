@@ -4487,10 +4487,10 @@ def create_parser():
                         help='Replace the formatting level'
                         ' with the value you set in custom.txt.')
     
-    # 추가
+    # 추가한 부분 - 조원준
     parser.add_argument('--alias', action='store_true', default=0,
-                        help=''
-                        '')
+                        help='Add aliasing code'
+                        ' with modifying class name and function name')
 
     return parser
 
