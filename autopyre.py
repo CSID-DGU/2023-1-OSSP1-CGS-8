@@ -89,6 +89,7 @@ import pyrestyle
 from pyrestyle import STARTSWITH_INDENT_STATEMENT_REGEX
 
 import libcst as cst # pip install libcst
+import string
 
 __version__ = '2.0.2'
 
