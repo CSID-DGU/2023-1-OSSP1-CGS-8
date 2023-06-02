@@ -1479,7 +1479,7 @@ class FixPEP8(object):
             origin_source = ''.join(self.source)
             self.source = modify_function_name(origin_source, function_name, fix_function_name)
     
-     # 추가한 부분 (Aliasing - class) - 조원준
+    # 추가한 부분 (Aliasing - class) - 조원준
     def fix_w706(self, result):
         """add class aliasing"""
         line_index = result['line'] - 1
@@ -1532,8 +1532,7 @@ class FixPEP8(object):
                 end_line_index = i
                 break
 
-        return end_line_index
-        
+        return end_line_index        
     
 # 추가한 부분 - 김위성
 def is_valid_name(origin_name, fixed_name):
@@ -4677,6 +4676,7 @@ def create_parser():
                              ' add this option. 2 is exists differences.')
     parser.add_argument('files', nargs='*',
                         help="files to format or '-' for standard in")
+    # 추가
     parser.add_argument('--alias', action='store_true', default=0,
                         help=''
                              '')

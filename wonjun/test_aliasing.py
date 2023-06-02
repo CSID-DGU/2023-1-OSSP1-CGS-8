@@ -1,3 +1,5 @@
+from test_import_userlib import *
+
 class ex_two:
     def ExFunc(self):
         print('ex2의 함수입니다.')
@@ -19,21 +21,21 @@ class ExThree:
         return None
 
 
-# python autopep8.py -a -a -a test_aliasing2.py
-# python fix_bug.py -a -a -a test_aliasing2.py
+# python autopep8.py -a -a -a --alias test_aliasing.py
 
+
+# Aliasing 코드 삽입 결과
 """
-Aliasing 코드 삽입 결과
 class ExTwo:
-    def ex_func(self):
+    def ex_func():
         print('ex2의 함수입니다.')
 
     ExFunc = ex_func
 
-    def aliasing(self):
+    def aliasing():
         print('ex2의 함수입니다.')
 
-    def function_aliasing(self):
+    def function_aliasing():
         print('ex2의 함수입니다.')
 
     FunctionAliasing = function_aliasing
@@ -61,4 +63,9 @@ ExFour = ex_four
 class ExThree:
     def ex_func2(self):
         return None
+    
+ex_two.ExFunc()
+ex_two.FunctionAliasing()
+ExFour()
+ExOne()
 """
