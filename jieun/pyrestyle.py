@@ -1742,16 +1742,18 @@ def class_name_convention(logical_line, tokens):
     token_start = None # 클래스명을 저장할 변수 추가
     
     for token_type, text, start, end, line in tokens:
-        if token_type == tokenize.NAME and text in keyword.kwlist:
-            prev_token_type == token_type
-        elif token_type != tokenize.NL:
+        if token_type == tokenize.NAME and text in keyword.kwlist: # class 라는 token 찾기
+            prev_token_type == text # prev_token_type에 text 저장
+        elif token_type != tokenize.NL and prev_token_type != 'class':
             prev_end = end
-        elif token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text) and prev_token_type == tokenize.NAME:
+        elif token_type == tokenize.NAME and prev_token_type == 'class' and text not in keyword.kwlist and not is_capwords(text):
             not_recommend_class_name = line[:start[1]].strip()
             if not_recommend_class_name:
                 token_start = start
         elif token_type == tokenize.OP and is_colon(text):
             yield (token_start, "W701 class name is recommended CapitalizedWords")
+        elif token_type == tokenize.NL:
+            prev_end = end
     
 '''
 @register_check
