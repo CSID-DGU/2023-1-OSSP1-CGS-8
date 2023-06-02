@@ -1842,7 +1842,7 @@ def to_capitalized_words(word):
         return word
     
     elif is_snake_case(word): 
-        return string.capwords(word, sep='_')
+        return string.capwords(word, sep='_').replace('_', '')
     
     elif is_mixed_word(word): 
         return word.replace('_', '')
