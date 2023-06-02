@@ -524,15 +524,15 @@ class FixPEP8(object):
         
         # 추가한 부분 김위성
         # 작명 컨벤션 aggressive 3레벨 일 경우와 experimental일 경우에만 실행
-        if options and (options.aggressive >= 3 or options.experimental):
-            self.fix_w701 = self.fix_w705
-            self.fix_w702 = self.fix_w707
-            
         # 추가한 부분 - 조원준
         # 작명 컨벤션 --alias 옵션 추가
-        if options and (options.aggressive >= 3 and options.alias):
-            self.fix_w701 = self.fix_w706
-            self.fix_w702 = self.fix_w708
+        if options and (options.aggressive >= 3 or options.experimental):
+            if options.alias:
+                self.fix_w701 = self.fix_w706
+                self.fix_w702 = self.fix_w708
+            else:
+                self.fix_w701 = self.fix_w705
+                self.fix_w702 = self.fix_w707
 
     def _fix_source(self, results):
         try:
@@ -1502,6 +1502,8 @@ class FixPEP8(object):
             self.source[line_index] = self.source[line_index][:offset] + fix_class_name + self.source[line_index][len(class_name) + offset:]
             input_code = indent + class_name + ' = ' + fix_class_name + cr
             self.source.insert(end_line_index, input_code)
+            global all_origin_identifiers
+            all_origin_identifiers.update([fix_class_name])
             
             
     # 추가한 부분 (Aliasing - function) - 조원준
@@ -1521,6 +1523,8 @@ class FixPEP8(object):
             self.source[line_index] = self.source[line_index][:offset] + fix_function_name + self.source[line_index][len(function_name) + offset:]
             input_code = indent + function_name + ' = ' + fix_function_name + cr
             self.source.insert(end_line_index, input_code)
+            global all_origin_identifiers
+            all_origin_identifiers.update([fix_function_name])
 
 
     # 추가한 부분 - 조원준
