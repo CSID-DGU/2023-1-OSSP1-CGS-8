@@ -1,0 +1,12 @@
+max_line_length:100
+indent_level:1
+list_bracket_style:0
+binary_newline_style:0
+string_quote_style:0
+
+
+max_line_length_ignore:True
+indent_level_ignore:True
+list_bracket_style_ignore:True
+binary_newline_style_ignore:True
+string_quote_style_ignore:True
