@@ -4432,7 +4432,38 @@ def fix_file(filename, options=None, output=None, apply_config=False):
 
     fixed_source = fix_lines(fixed_source, options, filename=filename)
 
-    if options.diff:
+    # 추가한 부분 aggressive 3레벨이고 -i 옵션이 있을 경우
+    # 변경 사항을 확인시켜 준 후 수정할 지 여부 선택
+    if options.in_place and (options.aggressive >= 3 or options.experimental):
+        new = io.StringIO(fixed_source)
+        new = new.readlines()
+        diff = get_diff_text(original_source, new, filename)
+        if output:
+            output.write(diff)
+            output.flush()
+        elif options.jobs > 1:
+            diff = diff.encode(encoding)
+            
+        command = input("작명 컨벤션을 적용하였을 때 변경 사항입니다. 파일에 적용 하시겠습니까? [Y/N] : ")
+        
+        if command.upper() == 'Y': 
+            original = "".join(original_source).splitlines()
+            fixed = fixed_source.splitlines()
+            original_source_last_line = (
+                original_source[-1].split("\n")[-1] if original_source else ""
+            )
+            fixed_source_last_line = fixed_source.split("\n")[-1]
+            if original != fixed or (
+                original_source_last_line != fixed_source_last_line
+            ):
+                with open_with_encoding(filename, 'w', encoding=encoding) as fp:
+                    fp.write(fixed_source)
+                return fixed_source
+            return None
+        else:
+            return diff
+        
+    elif options.diff:
         new = io.StringIO(fixed_source)
         new = new.readlines()
         diff = get_diff_text(original_source, new, filename)
