@@ -58,7 +58,6 @@ import sys
 import time
 import tokenize
 import warnings
-import ast
 from fnmatch import fnmatch
 from functools import lru_cache
 from optparse import OptionParser
@@ -154,6 +153,8 @@ BLANK_EXCEPT_REGEX = re.compile(r"except\s*:")
 
 _checks = {'physical_line': {}, 'logical_line': {}, 'tree': {}}
 
+#추가한 부분-김태욱
+identifiers = {}
 
 def _get_parameters(function):
     return [parameter.name
@@ -1728,41 +1729,6 @@ def is_capwords(word):
 
     return True
 
-# ast모듈을 통해 주어진 코드에서 class의 존재를 확인하는 함수
-def check_class_def(code):
-    try:
-        # 파싱
-        tree = ast.parse(code)
-        # 모든 노드 순회
-        for node in ast.walk(tree):
-            # classDef 노드 확인
-            if isinstance(node, ast.ClassDef):
-                return False
-    except SyntaxError:
-        # 잘못된 구문
-        return False
-    return False
-
-# class명을 정규 표현식으로 추출하는 함수
-def extract_class_name(line):
-    pattern = r"class\s+([A-Za-z0-9_]*)"
-    match = re.search(pattern, line)
-    if match:
-        class_name = match.group(1)
-        return class_name
-    return None
-
-@register_check
-def class_name_convention(logical_line, tokens):    
-    prev_end = (0, 0)
-    for token_type, text, start, end, line in tokens:
-        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_capwords(text):
-            not_recommand_class_name = extract_class_name(line)
-            if not_recommand_class_name:
-                yield (start, "W701 class name is recommended CapitalizedWords")
-        elif token_type != tokenize.NL:
-            prev_end = end
-            
 # 추가한 부분 - 김태욱 / function name
 def is_snakecase(word):
     
@@ -1782,38 +1748,37 @@ def is_snakecase(word):
 
     return True
 
-# ast모듈을 통해 주어진 코드에서 function의 존재를 확인하는 함수
-def check_function_def(code):
+# class명을 체크하고 key error가 안나도록 하는거
+def is_name_def(token_type, text, key_value):
     try:
-        # 파싱
-        tree = ast.parse(code)
-        # 모든 노드 순회
-        for node in ast.walk(tree):
-            # classDef 노드 확인
-            if isinstance(node, ast.FunctionDef):
-                return False
-    except SyntaxError:
-        # 잘못된 구문
+        if token_type == tokenize.NAME and text not in keyword.kwlist and identifiers[text] == key_value:
+            return True
+        else:
+            return False
+        
+    except KeyError:
         return False
-    return False
 
-# 함수명을 정규 표현식으로 추출하는 함수
-def extract_func_name(line):
-    pattern = r"def\s+([A-Za-z0-9_]*)"
-    match = re.search(pattern, line)
-    if match:
-        func_name = match.group(1)
-        return func_name
-    return None
-    
+#class name check
+@register_check
+def class_name_convention(logical_line, tokens):
+    prev_end = (0, 0)
+    for token_type, text, start, end, line in tokens:
+        if is_name_def(token_type, text, ("class", start[0])):
+            if not is_capwords(text):
+                yield (start, "W701 class name is recommended CapitalizedWords")
+        elif token_type != tokenize.NL:
+            prev_end = end
+
+#function name check
 @register_check
 def func_name_convention(logical_line, tokens):    
     prev_end = (0, 0)
     for token_type, text, start, end, line in tokens:
-        if token_type == tokenize.NAME and text not in keyword.kwlist and not is_snakecase(text) and check_function_def(line):
-            not_recommand_func_name = extract_func_name(line)
-            if not_recommand_func_name:
+        if is_name_def(token_type, text, ("function", start[0])):
+            if not is_snakecase(text):
                 yield (start, "W702 function name is recommended snake_case")
+
         elif token_type != tokenize.NL:
             prev_end = end
             
@@ -2087,6 +2052,9 @@ class Checker:
                     self.lines[0] = self.lines[0][1:]
                 elif self.lines[0][:3] == '\xef\xbb\xbf':
                     self.lines[0] = self.lines[0][3:]
+                    
+        #추가- 김태욱
+        self.identifers = self.get_identifiers()
         self.report = report or options.report
         self.report_error = self.report.error
         self.noqa = False
@@ -2320,7 +2288,25 @@ class Checker:
             self.check_logical()
         return self.report.get_file_results()
 
+#추가한 부분-김태욱 / get_identifiers
 
+    def get_identifiers(self):
+        source = ''.join(self.lines)
+        
+        try:
+            tree = ast.parse(source)
+        except:
+            return
+        
+        global identifiers
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                identifiers[node.name] = ("class", node.lineno)
+            elif isinstance(node, ast.FunctionDef):
+                identifiers[node.name] = ("function", node.lineno)
+        
+        return identifiers
+    
 class BaseReport:
     """Collect the results of the checks."""
 
