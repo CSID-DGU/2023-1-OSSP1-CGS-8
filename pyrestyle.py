@@ -155,7 +155,8 @@ BLANK_EXCEPT_REGEX = re.compile(r"except\s*:")
 _checks = {'physical_line': {}, 'logical_line': {}, 'tree': {}}
 
 #추가한 부분-김태욱
-identifiers = {}
+class_identifiers = {}
+function_identifiers = {}
 
 def _get_parameters(function):
     return [parameter.name
@@ -1741,7 +1742,7 @@ def is_snakecase(word):
     if '__' in word:
         if not (word.startswith("__") and word.endswith("__")):
             return False
- 
+    
     # 던더메서드가 아닌데 첫번째 문자가 소문자가 아닌 경우
     if not word[0].islower():
         if not (word.startswith("__") and word.endswith("__")):
@@ -1750,9 +1751,19 @@ def is_snakecase(word):
     return True
 
 # class명을 체크하고 key error가 안나도록 하는거
-def is_name_def(token_type, text, key_value):
+def is_class_def(token_type, text, row):
     try:
-        if token_type == tokenize.NAME and text not in keyword.kwlist and identifiers[text] == key_value:
+        if token_type == tokenize.NAME and text not in keyword.kwlist and class_identifiers[text] == row:
+            return True
+        else:
+            return False
+        
+    except KeyError:
+        return False
+    
+def is_function_def(token_type, text, row):
+    try:
+        if token_type == tokenize.NAME and text not in keyword.kwlist and function_identifiers[text] == row:
             return True
         else:
             return False
@@ -1765,7 +1776,8 @@ def is_name_def(token_type, text, key_value):
 def class_name_convention(logical_line, tokens):
     prev_end = (0, 0)
     for token_type, text, start, end, line in tokens:
-        if is_name_def(token_type, text, ("class", start[0])):
+        if is_class_def(token_type, text, start[0]):
+            
             if not is_capwords(text):
                 yield (start, "W701 class name is recommended CapitalizedWords")
         elif token_type != tokenize.NL:
@@ -1776,7 +1788,7 @@ def class_name_convention(logical_line, tokens):
 def func_name_convention(logical_line, tokens):    
     prev_end = (0, 0)
     for token_type, text, start, end, line in tokens:
-        if is_name_def(token_type, text, ("function", start[0])):
+        if is_function_def(token_type, text, start[0]):
             if not is_snakecase(text):
                 yield (start, "W702 function name is recommended snake_case")
 
@@ -2055,7 +2067,7 @@ class Checker:
                     self.lines[0] = self.lines[0][3:]
                     
         #추가- 김태욱
-        self.identifers = self.get_identifiers()
+        self.class_identifers, self.function_identifiers = self.get_identifiers()
         self.report = report or options.report
         self.report_error = self.report.error
         self.noqa = False
@@ -2289,7 +2301,7 @@ class Checker:
             self.check_logical()
         return self.report.get_file_results()
 
-#추가한 부분-김태욱 / get_identifiers
+    #추가한 부분-김태욱 / get_identifiers
 
     def get_identifiers(self):
         source = ''.join(self.lines)
@@ -2299,14 +2311,15 @@ class Checker:
         except:
             return
         
-        global identifiers
+        global class_identifiers
+        global function_identifiers
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
-                identifiers[node.name] = ("class", node.lineno)
+                class_identifiers[node.name] = (node.lineno)
             elif isinstance(node, ast.FunctionDef):
-                identifiers[node.name] = ("function", node.lineno)
+                function_identifiers[node.name] = (node.lineno)
         
-        return identifiers
+        return class_identifiers, function_identifiers
     
 class BaseReport:
     """Collect the results of the checks."""
