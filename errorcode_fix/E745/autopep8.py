@@ -992,7 +992,7 @@ class FixPEP8(object):
             self.source[line_index+offset] = ''
 
     #추가한 부분 - 차재식
-    def fix_e744(self,result):
+    def fix_w744(self,result):
         line_index = result['line'] - 1
         target = self.source[line_index]
         i =0 
@@ -1026,7 +1026,7 @@ class FixPEP8(object):
     
     # 추가한 부분 - 차재식
     # single_quote -> double_quote 변환
-    def fix_e745(self, result):
+    def fix_w745(self, result):
         '''e745 docstring'''
         line_index = result['line'] - 1
         target = self.source[line_index]
