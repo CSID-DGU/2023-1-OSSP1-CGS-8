@@ -1615,7 +1615,7 @@ class FixPEP8(object):
         target = self.source[line_index]
         indent = _get_indentation(target)
         offset = result['column'] - 1
-        end_line_index = self.find_end_line_index(line_index, indent)
+        end_line_index = find_end_line_index(self.source, line_index, indent)
 
         class_name = extract_class_name(target)
         fix_class_name = to_capitalized_words(class_name)
@@ -1636,7 +1636,7 @@ class FixPEP8(object):
         target = self.source[line_index]
         indent = _get_indentation(target)
         offset = result['column'] - 1
-        end_line_index = self.find_end_line_index(line_index, indent)
+        end_line_index = find_end_line_index(self.source, line_index, indent)
 
         function_name = extract_function_name(target)
         fix_function_name = to_snake_case(function_name)
@@ -1649,24 +1649,24 @@ class FixPEP8(object):
             all_origin_identifiers.update([fix_function_name])
             
             
-    # 추가한 부분 - 조원준
-    def find_end_line_index(self, start_line_index, indent):
-        """Find the index of the line where the block ends"""
-        next_indent_level = len(indent)
-        end_line_index = start_line_index + 1
+# 추가한 부분 - 조원준
+def find_end_line_index(source, start_line_index, indent):
+    """Find the index of the line where the block ends"""
+    next_indent_level = len(indent)
+    end_line_index = start_line_index + 1
 
-        for i in range(start_line_index + 1, len(self.source)):
-            line = self.source[i]
-            line_indent = _get_indentation(line)
+    for i in range(start_line_index + 1, len(source)):
+        line = source[i]
+        line_indent = _get_indentation(line)
 
-            if not line.strip():
-                continue
+        if not line.strip():
+            continue
 
-            if len(line_indent) <= next_indent_level:
-                end_line_index = i
-                break
+        if len(line_indent) <= next_indent_level:
+            end_line_index = i
+            break
 
-        return end_line_index        
+    return end_line_index        
 
 
 # 추가한 부분 - 이선호
