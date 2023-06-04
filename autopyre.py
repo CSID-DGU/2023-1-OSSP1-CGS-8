@@ -1671,23 +1671,14 @@ def find_end_line_index(source, start_line_index, indent):
 
 # 추가한 부분 - 이선호
 # 이항 연산자인지 확인
-def is_binary_operator(char):
+def is_continuous_operator(char):
     binary_operators = [
         "+", "-", "*", "/", "%", "**", "//", "==", "!=", ">", "<", ">=", "<=",
-        "and", "or", "in", "not in", "is", "is not", "\\", ','
+        "and", "or", "in", "not in", "is", "is not", "\\", ',', "~", "not"
     ]
     
-    return char in binary_operators or getattr(operator, char, None) is not None
-
-
-# 추가한 부분 - 이선호
-# 단항 연산자인지 확인
-def is_unary_operator(char):
-    unary_operators = [
-        "+", "-", "~", "not"
-    ]
-    
-    return char in unary_operators or getattr(operator, char + " ", None) is not None
+    return (char in binary_operators or getattr(operator, char, None) is not None
+            or getattr(operator, char + " ", None) is not None)
 
 
 # 추가한 부분 - 이선호
@@ -1713,9 +1704,8 @@ def count_close_bracket(line):
 def check_continuous_line(line, upperline):
     if upperline.strip() == '':
         if ((count_open_bracket(line) != count_close_bracket(line)) or
-            is_binary_operator(line[-1]) or
-            is_unary_operator(line[-1]) or
-            is_binary_operator(line.lstrip()[0])):
+            is_continuous_operator(line[line.rfind(' '):-1]) or
+            is_continuous_operator(line.lstrip()[0:line.lstrip().find(' ')])):
             return True
         else:
             return False
@@ -1724,14 +1714,14 @@ def check_continuous_line(line, upperline):
             upperline = upperline[:upperline.rfind('#')].rstrip()
         else: upperline = upperline.strip()
         if ((count_open_bracket(line) != count_close_bracket(line)) or
-            is_binary_operator(line[-1]) or
-            is_unary_operator(line[-1]) or
-            is_binary_operator(line.lstrip()[0]) or
-            is_binary_operator(upperline[-1]) or
-            is_unary_operator(upperline[-1])):
+            is_continuous_operator(line[line.rfind(' '):-1]) or
+            is_continuous_operator(line.lstrip()[0:line.lstrip().find(' ')]) or
+            (count_open_bracket(upperline) > count_close_bracket(upperline)) or
+            is_continuous_operator(upperline[upperline.rfind(' '):-1])):
             return True
         else:
             return False
+        
 
 # 추가한 부분 - 김위성  
 # 보안 적용 - 변경한 이름을 적용할지 있는지 검증
