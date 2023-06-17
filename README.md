@@ -32,7 +32,7 @@ $ autopep8 --in-place --aggressive --aggressive <filename>
 ```
 
 ## 정보
- – 김위성 [@github](https://github.com/kimwiseong) – @dgu.ac.kr <br/>
+ – 김위성 [@github](https://github.com/kimwiseong) – 2019112083@dgu.ac.kr <br/>
  – 김태욱 [@github](https://github.com/Taew00k) – davis0625@dgu.ac.kr <br/>
  – 이선호 [@github](https://github.com/prefer52) – @dgu.ac.kr <br/>
  – 조원준 [@github](https://github.com/jun6292) – c68254@dgu.ac.kr <br/>
