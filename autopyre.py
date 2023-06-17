@@ -1988,6 +1988,9 @@ def analyze_file(file_path):
         # import하는 파일에서 호출하는 함수
         elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
             identifiers.add(node.func.id)
+        # import하는 파일에서 참조하는 클래스
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+            identifiers.add(node.id)
 
     return identifiers
 
