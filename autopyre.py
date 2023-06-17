@@ -1047,63 +1047,6 @@ class FixPEP8(object):
         for offset in range(i):
             self.source[line_index+offset] = ''
 
-    def fix_w744(self,result):
-        line_index = result['line'] - 1
-        target = self.source[line_index]
-        i =0 
-        check = False
-        # 해당 라인을 읽어와 ' 또는 " 로 시작하는지 확인
-        while i <len(target):
-            if target[i] == '"':
-                check = False
-                break
-            elif target[i] == "'":
-                check  = True
-                break
-            else:
-                i+=1
-        # 변환 해주는 작업
-        double_quote = {
-            ord('"') : "'",
-            ord("'") : '\"'
-        }
-        single_quote = {
-            ord("'") : '"',
-            ord('"') : "\'"
-        }
-        # 라인 업데이트
-        if check == False:
-            self.source[line_index] = target.translate(double_quote)            
-        else:
-            self.source[line_index] = target.translate(single_quote)
-
-    # 추가한 부분 - 차재식
-    # single_quote -> double_quote 변환
-    def fix_w745(self, result):
-        '''w745 docstring'''
-        line_index = result['line'] - 1
-        target = self.source[line_index]
-        end_index = line_index + 1
-        flag = False
-        try:
-            while True:
-                # 한줄인 경우
-                if target.strip().startswith("'''") and target.strip().endswith("'''"):
-                    # 차이값을 구해 줄에 '''만 있는지 확인
-                    if target.find("'''") != -1 and target.find("'''") != target.rfind("'''"):
-                        self.source[line_index] = self.source[line_index].replace("'''",'"""')
-                        break
-                # 다음 '''을 찾을 때 까지
-                if self.source[end_index].endswith("'''\n"):
-                    flag = True
-                if flag:
-                    self.source[line_index] =self.source[line_index].replace("'''", '"""')
-                    self.source[end_index] = self.source[end_index].replace("'''", '"""')
-                    break
-                end_index += 1
-        except IndexError:
-            pass
-
     def fix_long_line_logically(self, result, logical):
         """Try to make lines fit within --max-line-length characters."""
         if (
@@ -1649,7 +1592,65 @@ class FixPEP8(object):
             global all_origin_identifiers
             all_origin_identifiers.update([fix_function_name])
             
-            
+
+    def fix_w744(self,result):
+        line_index = result['line'] - 1
+        target = self.source[line_index]
+        i =0 
+        check = False
+        # 해당 라인을 읽어와 ' 또는 " 로 시작하는지 확인
+        while i <len(target):
+            if target[i] == '"':
+                check = False
+                break
+            elif target[i] == "'":
+                check  = True
+                break
+            else:
+                i+=1
+        # 변환 해주는 작업
+        double_quote = {
+            ord('"') : "'",
+            ord("'") : '\"'
+        }
+        single_quote = {
+            ord("'") : '"',
+            ord('"') : "\'"
+        }
+        # 라인 업데이트
+        if check == False:
+            self.source[line_index] = target.translate(double_quote)            
+        else:
+            self.source[line_index] = target.translate(single_quote)
+
+    # 추가한 부분 - 차재식
+    # single_quote -> double_quote 변환
+    def fix_w745(self, result):
+        '''w745 docstring'''
+        line_index = result['line'] - 1
+        target = self.source[line_index]
+        end_index = line_index + 1
+        flag = False
+        try:
+            while True:
+                # 한줄인 경우
+                if target.strip().startswith("'''") and target.strip().endswith("'''"):
+                    # 차이값을 구해 줄에 '''만 있는지 확인
+                    if target.find("'''") != -1 and target.find("'''") != target.rfind("'''"):
+                        self.source[line_index] = self.source[line_index].replace("'''",'"""')
+                        break
+                # 다음 '''을 찾을 때 까지
+                if self.source[end_index].endswith("'''\n"):
+                    flag = True
+                if flag:
+                    self.source[line_index] =self.source[line_index].replace("'''", '"""')
+                    self.source[end_index] = self.source[end_index].replace("'''", '"""')
+                    break
+                end_index += 1
+        except IndexError:
+            pass
+
+
 # 추가한 부분 - 조원준
 def find_end_line_index(source, start_line_index, indent):
     """Find the index of the line where the block ends"""
