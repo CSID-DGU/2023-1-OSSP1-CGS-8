@@ -89,8 +89,9 @@ from configparser import ConfigParser as SafeConfigParser, Error
 import pyrestyle
 from pyrestyle import STARTSWITH_INDENT_STATEMENT_REGEX
 
-import libcst as cst # pip install libcst
+import libcst as cst  # pip install libcst
 import string
+from termcolor import colored  # pip install termcolor
 
 __version__ = '2.0.2'
 
@@ -2618,7 +2619,7 @@ def _get_indentation(line):
 
     return ''
 
-
+# 추가한 부분 - 김위성 - diff 컬러 추가
 def get_diff_text(old, new, filename):
     """Return text of unified diff between old and new."""
     newline = '\n'
@@ -2630,9 +2631,13 @@ def get_diff_text(old, new, filename):
 
     text = ''
     for line in diff:
-        text += line
+        if line.startswith('-'):
+            text += colored(line, 'red')
+        elif line.startswith('+'):
+            text += colored(line, 'green')
+        else:
+            text += line
 
-        # Work around missing newline (http://bugs.python.org/issue2142).
         if text and not line.endswith(newline):
             text += newline + r'\ No newline at end of file' + newline
 
