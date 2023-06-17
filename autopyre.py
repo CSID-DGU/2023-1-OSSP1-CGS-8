@@ -1939,7 +1939,7 @@ def find_importing_files(project_path, target_file):
 # 적절한 자원 반환 - with문 내의 코드에 예외가 발생하더라도 항상 파일 닫기가 보장 
 # 예외 처리 - try-except : 사용자가 syntax 에러가 있는 소스 코드에 대해 작명 컨벤션을 적용할 경우
 def is_file_imported(file_path, target_file):
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', errors='ignore') as file:
         source_code = file.read()
     
     tree = None
