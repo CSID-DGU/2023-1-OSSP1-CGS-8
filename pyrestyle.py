@@ -1808,7 +1808,7 @@ def is_double_quote(word):
 def string_single_quote(logical_line, tokens):
     prev_end = (0,0)
     for token_type, text, start, end, line in tokens:
-        if token_type == tokenize.STRING:
+        if token_type == tokenize.STRING and not is_double_quote(text):
             not_recommend_single_quote = line[:start[1]].strip()
             if not_recommend_single_quote:
                 yield (start, "W744 double quotation marks are recommended for strings")
