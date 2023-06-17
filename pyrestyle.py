@@ -2309,7 +2309,7 @@ class Checker:
         try:
             tree = ast.parse(source)
         except:
-            return
+            return {}, {}
         
         global class_identifiers
         global function_identifiers
