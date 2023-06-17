@@ -4439,7 +4439,7 @@ def fix_file(filename, options=None, output=None, apply_config=False):
         elif options.jobs > 1:
             diff = diff.encode(encoding)
             
-        command = input("작명 컨벤션을 적용하였을 때 변경 사항입니다. 파일에 적용 하시겠습니까? [Y/N] : ")
+        command = input("작명 컨벤션을 적용하였을 때 변경 사항입니다. 파일에 적용 하시겠습니까? [Y / N] : ")
         
         if command.upper() == 'Y': 
             original = "".join(original_source).splitlines()
