@@ -93,7 +93,7 @@ import libcst as cst  # pip install libcst
 import string
 from termcolor import colored  # pip install termcolor
 
-__version__ = '0.0.1'
+__version__ = '1.0.1'
 
 
 CR = '\r'
