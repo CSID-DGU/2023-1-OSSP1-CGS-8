@@ -1938,7 +1938,7 @@ def find_importing_files(project_path, target_file):
 # 적절한 자원 반환 - with문 내의 코드에 예외가 발생하더라도 항상 파일 닫기가 보장 
 # 예외 처리 - try-except : 사용자가 syntax 에러가 있는 소스 코드에 대해 작명 컨벤션을 적용할 경우
 def is_file_imported(file_path, target_file):
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', errors='ignore') as file:
         source_code = file.read()
     
     tree = None
@@ -1962,7 +1962,7 @@ def is_file_imported(file_path, target_file):
 
 # 추가한 부분 - 김위성 - 식별자, 참조되는 식별자를 모두 저장
 def analyze_file(file_path):
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', errors='ignore') as file:
         source_code = file.read()
     
     tree = None
@@ -2015,7 +2015,7 @@ def get_library_path(project_path, library_name):
 
 # 추가한 부분 - 김위성 - import하는 파일, import되는 파일
 def get_import_paths(project_path, file_path):
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', errors='ignore') as file:
         source_code = file.read()
 
     tree = None
