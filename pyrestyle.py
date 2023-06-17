@@ -2402,7 +2402,7 @@ class BaseReport:
         # Error code, Description, Count 출력
         table = {'Error code': [], 'Description': [], 'Count': []}
         
-        for index, key in enumerate(sorted(self.messages), 1):
+        for key in sorted(self.messages):
             if key.startswith(prefix):
                 table['Error code'].append(key)
                 table['Description'].append(self.messages[key])
@@ -2413,11 +2413,11 @@ class BaseReport:
         table['Count'].append(count_sum)
         
         # Error code 열에 추가(error code의 총 개수)
-        count_error = 'Sum : ' + str(index)
+        count_error = 'Sum : ' + str(len(self.messages))
         table['Error code'].append(count_error)      
         
         print(tabulate(table, headers='keys', tablefmt='fancy_grid', missingval=''))
-
+    
     def print_benchmark(self):
         """Print benchmark numbers."""
         print('{:<7.2f} {}'.format(self.elapsed, 'seconds elapsed'))
