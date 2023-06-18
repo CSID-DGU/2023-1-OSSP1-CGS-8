@@ -8,6 +8,10 @@ import io
 
 from setuptools import setup
 
+# read the contents of your README file
+from pathlib import Path
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
 
 INSTALL_REQUIRES = (
     ['tomli; python_version < "3.11"']
@@ -27,7 +31,7 @@ with io.open('README.md') as readme:
         version=version(),
         description='A tool that automatically formats Python code to conform '
                     'to the PEP 8 style guide and This project based on autopep8',
-        long_description=readme.read(),
+        long_description=long_description,
         long_description_content_type = "text/markdown",
         license='Expat License',
         author='Hideo Hattori, 2023-1-OPPS1-CGS-08',
