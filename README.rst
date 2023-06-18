@@ -2,8 +2,8 @@
 autopyre
 ========
 
-2023년 1학기 공개SW프로젝트01 8조 컴공쏘년단
-----------------------------------------
+2023-1-OPPS1-CGS-08
+-------------------
 
 autopep8_ 과 pycodestyle_ 을 따르는 Python Code Style Formatter로,
 파이썬 코드 스타일 가이드 PEP8_ 에 기반해 코드 스타일의 일관성을 유지하고
@@ -11,27 +11,36 @@ autopep8_ 과 pycodestyle_ 을 따르는 Python Code Style Formatter로,
 또한 PEP8에서 언급하는 작명 컨벤션을 추가 구현하였습니다.
 
 
-사용 예제
-----------
+.. contents::
 
-스크린 샷과 코드 예제를 통해 사용 방법을 자세히 설명합니다.
 
-설치 방법
-~~~~~~~~~
+Installation
+============
 
 .. code-block:: shell
 
-   $ pip install --upgrade autopep8
+   $ pip install autopyre
+   $ pip install --upgrade auto-pyre
 
-사용 방법
-~~~~~~~~~
+
+Requirements
+============
+
+autopyre requires pyrestyle_.
+
+.. _pyrestyle: https://github.com/PyCQA/pycodestyle
+
+
+Usage
+=====
 
 .. code-block:: shell
 
    $ autopep8 --in-place --aggressive --aggressive <filename>
 
-모듈로 사용
-~~~~~~~~~~
+
+Use as a module
+===============
 
 .. code-block:: python
 
@@ -41,8 +50,27 @@ autopep8_ 과 pycodestyle_ 을 따르는 Python Code Style Formatter로,
    'print( 123 )\n'
 
 
-정보
-----
+.. image:: https://img.shields.io/pypi/v/autopep8.svg
+    :target: https://pypi.org/project/autopep8/
+    :alt: PyPI Version
+
+autopyre는 Python 코드를 자동으로 PEP 8_ 스타일 가이드에 맞게 포매팅하는 도구입니다. 
+이 도구는 pyrestyle 유틸리티를 사용하여 코드에서 포매팅이 필요한 부분을 확인합니다. 
+autopyre는 pyrestyle이 보고할 수 있는 대부분의 에러를 수정합니다.
+
+.. _PEP 8: https://www.python.org/dev/peps/pep-0008/
+.. _issues: https://pycodestyle.readthedocs.org/en/latest/intro.html#error-codes
+
+
+License
+=======
+
+MIT 라이선스를 준수하며 LICENSE_ 에서 자세한 정보를 확인할 수 있습니다.
+.. _LICENSE: https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08/blob/main/LICENSE
+
+
+contacts
+========
 
 - 김위성 `@github <https://github.com/kimwiseong>`_ – 2019112083@dgu.ac.kr
 - 김태욱 `@github <https://github.com/Taew00k>`_ – davis0625@dgu.ac.kr
@@ -51,54 +79,6 @@ autopep8_ 과 pycodestyle_ 을 따르는 Python Code Style Formatter로,
 - 차재식 `@github <https://github.com/Chajaesik01>`_ – 2019112003@dgu.ac.kr
 - 하지은 `@github <https://github.com/HAJIEUN02>`_ – 2021111937@dgu.ac.kr
 
-
-라이선스
---------
-
-MIT 라이선스를 준수하며 ``LICENSE``에서 자세한 정보를 확인할 수 있습니다.
-
-
-
-
-
-
-.. image:: https://img.shields.io/pypi/v/autopep8.svg
-    :target: https://pypi.org/project/autopep8/
-    :alt: PyPI Version
-
-autopyre automatically formats Python code to conform to the `PEP 8`_ style
-guide. It uses the pycodetyle_ utility to determine what parts of the code
-needs to be formatted. autopyre is capable of fixing most of the formatting
-issues_ that can be reported by pycodestyle.
-
-.. _PEP 8: https://www.python.org/dev/peps/pep-0008/
-.. _issues: https://pycodestyle.readthedocs.org/en/latest/intro.html#error-codes
-
-.. contents::
-
-
-Installation
-============
-
-From pip::
-
-    $ pip install --upgrade autopep8
-
-Consider using the ``--user`` option_.
-
-.. _option: https://pip.pypa.io/en/latest/user_guide/#user-installs
-
-
-Requirements
-============
-
-autopep8 requires pycodestyle_.
-
-.. _pycodestyle: https://github.com/PyCQA/pycodestyle
-
-
-사용법
-=====
 
 To modify a file in place (with aggressive level 2)::
 
@@ -125,7 +105,7 @@ Before running autopep8.
          if bar : bar+=1;  bar=bar* bar   ; return bar
          else:
                         some_string = """
-    		           Indentation in multiline strings should not be touched.
+                       Indentation in multiline strings should not be touched.
     Only actual code should be reindented.
     """
                         return (sys.path, some_string)
@@ -175,19 +155,20 @@ After running autopep8.
                 return bar
             else:
                 some_string = """
-    		           Indentation in multiline strings should not be touched.
+                       Indentation in multiline strings should not be touched.
     Only actual code should be reindented.
     """
                 return (sys.path, some_string)
 
-Options::
+options::
 
-    usage: autopep8 [-h] [--version] [-v] [-d] [-i] [--global-config filename]
+    usage: autopyre [-h] [--version] [-v] [-d] [-i] [--global-config filename]
                     [--ignore-local-config] [-r] [-j n] [-p n] [-a]
                     [--experimental] [--exclude globs] [--list-fixes]
                     [--ignore errors] [--select errors] [--max-line-length n]
                     [--line-range line line] [--hang-closing] [--exit-code]
                     [files [files ...]]
+				[--customize] [-a —a -a —-alias] 
 
     Automatically formats Python code to conform to the PEP 8 style guide.
 
@@ -240,7 +221,7 @@ Options::
 Features
 ========
 
-autopep8 fixes the following issues_ reported by pycodestyle_::
+autopyre fixes the following issues_ reported by pyrestyle_::
 
     E101 - Reindent all lines.
     E11  - Fix indentation.
@@ -299,30 +280,12 @@ autopep8 fixes the following issues_ reported by pycodestyle_::
     W504 - Fix line break after binary operator.
     W605 - Fix invalid escape sequence 'x'.
     W690 - Fix various deprecated code (via lib2to3).
-
-autopep8 also fixes some issues not found by pycodestyle_.
-
-- Correct deprecated or non-idiomatic Python code (via ``lib2to3``). Use this
-  for making Python 2.7 code more compatible with Python 3. (This is triggered
-  if ``W690`` is enabled.)
-- Normalize files with mixed line endings.
-- Put a blank line between a class docstring and its first method
-  declaration. (Enabled with ``E301``.)
-- Remove blank lines between a function declaration and its docstring. (Enabled
-  with ``E303``.)
-
-autopep8 avoids fixing some issues found by pycodestyle_.
-
-- ``E112``/``E113`` for non comments are reports of bad indentation that break
-  syntax rules. These should not be modified at all.
-- ``E265``, which refers to spacing after comment hash, is ignored if the
-  comment looks like code. autopep8 avoids modifying these since they are not
-  real comments. If you really want to get rid of the pycodestyle_ warning,
-  consider just removing the commented-out code. (This can be automated via
-  eradicate_.)
-
-.. _eradicate: https://github.com/myint/eradicate
-
+    W705 -
+    W706 -
+    W707 -
+    W708 -
+    w744 -
+    w745 -
 
 More advanced usage
 ===================
@@ -399,59 +362,12 @@ Or with options:
     ...                   options={'ignore': ['E']})
     'print( 123 )\n'
 
-
-Configuration
-=============
-
-By default, if ``$HOME/.config/pycodestyle`` (``~\.pycodestyle`` in Windows
-environment) exists, it will be used as global configuration file.
-Alternatively, you can specify the global configuration file with the
-``--global-config`` option.
-
-Also, if ``setup.cfg``, ``tox.ini``, ``.pep8`` and ``.flake8`` files exist
-in the directory where the target file exists, it will be used as the
-configuration file.
-
-``pep8``, ``pycodestyle``, and ``flake8`` can be used as a section.
-
-configuration file example::
-
-    [pycodestyle]
-    max_line_length = 120
-    ignore = E501
-
-pyproject.toml
---------------
-
-autopep8 can also use ``pyproject.toml``.
-The section must be ``[tool.autopep8]``, and ``pyproject.toml`` takes precedence
-over any other configuration files.
-
-configuration file example::
-
-    [tool.autopep8]
-    max_line_length = 120
-    ignore = "E501,W6"  # or ["E501", "W6"]
-    in-place = true
-    recursive = true
-    aggressive = 3
+Naming Convention
+=================
 
 
-Testing
-=======
-
-Test cases are in ``test/test_autopep8.py``. They can be run directly via
-``python test/test_autopep8.py`` or via tox_. The latter is useful for
-testing against multiple Python interpreters. (We currently test against
-CPython versions 3.7, 3.8, 3.9 and 3.10. We also test against PyPy.)
-
-.. _`tox`: https://pypi.org/project/tox/
-
-Broad spectrum testing is available via ``test/acid.py``. This script runs
-autopep8 against Python code and checks for correctness and completeness of the
-code fixes. It can check that the bytecode remains identical.
-``test/acid_pypi.py`` makes use of ``acid.py`` to test against the latest
-released packages on PyPI.
+Customize
+=========
 
 
 Links
@@ -466,4 +382,5 @@ Links
 .. _autopep8: https://github.com/hhatto/autopep8
 .. _autopyre: https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08
 .. _pycodestyle: https://github.com/PyCQA/pycodestyle
+.. _pyrestyle: https://github.com/PyCQA/pycodestyle
 .. _PEP8: https://www.python.org/dev/peps/pep-0008/
