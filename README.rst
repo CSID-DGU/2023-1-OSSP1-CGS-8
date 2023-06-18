@@ -2,13 +2,12 @@
 autopyre
 ========
 
-2023-1-OPPS1-CGS-08
--------------------
+autopep8_ 과 pycodestyle_ 을 개선한 ``Python Code Style Formatter``
 
-autopep8_ 과 pycodestyle_ 을 따르는 Python Code Style Formatter로,
-파이썬 코드 스타일 가이드 PEP8_ 에 기반해 코드 스타일의 일관성을 유지하고
-커스터마이징 기능을 추가해 유연성을 강화했습니다. 
-또한 PEP8에서 언급하는 작명 컨벤션을 추가 구현하였습니다.
+* autopyre는 python 코드를 자동으로 PEP8_ 스타일 가이드에 맞게 포매팅하는 도구입니다.
+* 파이썬 코드 스타일 가이드 PEP8_ 에 기반한 코드 스타일로 수정해줍니다.
+* 사용자가 스타일 설정이 가능하도록 ``커스터마이징`` 기능을 추가해 유연성을 강화했습니다.
+* 또한 PEP8에서 언급하는 클래스명, 함수명에 대한 ``작명 컨벤션`` 에 부합하게 구현하였습니다.
 
 
 .. contents::
@@ -20,7 +19,7 @@ Installation
 .. code-block:: shell
 
    $ pip install autopyre
-   $ pip install --upgrade auto-pyre
+   $ pip install --upgrade autopyre
 
 
 Requirements
@@ -28,7 +27,10 @@ Requirements
 
 autopyre requires pyrestyle_.
 
-.. _pyrestyle: https://github.com/PyCQA/pycodestyle
+.. code-block:: shell
+
+   $ pip install pyrestyle
+   $ pip install --upgrade pyrestyle
 
 
 Usage
@@ -54,30 +56,13 @@ Use as a module
     :target: https://pypi.org/project/autopep8/
     :alt: PyPI Version
 
-autopyre는 Python 코드를 자동으로 PEP 8_ 스타일 가이드에 맞게 포매팅하는 도구입니다. 
-이 도구는 pyrestyle 유틸리티를 사용하여 코드에서 포매팅이 필요한 부분을 확인합니다. 
-autopyre는 pyrestyle이 보고할 수 있는 대부분의 에러를 수정합니다.
+
 
 .. _PEP 8: https://www.python.org/dev/peps/pep-0008/
 .. _issues: https://pycodestyle.readthedocs.org/en/latest/intro.html#error-codes
 
 
-License
-=======
 
-MIT 라이선스를 준수하며 LICENSE_ 에서 자세한 정보를 확인할 수 있습니다.
-.. _LICENSE: https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08/blob/main/LICENSE
-
-
-contacts
-========
-
-- 김위성 `@github <https://github.com/kimwiseong>`_ – 2019112083@dgu.ac.kr
-- 김태욱 `@github <https://github.com/Taew00k>`_ – davis0625@dgu.ac.kr
-- 이선호 `@github <https://github.com/prefer52>`_ – 2019111998@dgu.ac.kr
-- 조원준 `@github <https://github.com/jun6292>`_ – c68254@dgu.ac.kr
-- 차재식 `@github <https://github.com/Chajaesik01>`_ – 2019112003@dgu.ac.kr
-- 하지은 `@github <https://github.com/HAJIEUN02>`_ – 2021111937@dgu.ac.kr
 
 
 To modify a file in place (with aggressive level 2)::
@@ -168,7 +153,7 @@ options::
                     [--ignore errors] [--select errors] [--max-line-length n]
                     [--line-range line line] [--hang-closing] [--exit-code]
                     [files [files ...]]
-				[--customize] [-a —a -a —-alias] 
+				    [--customize] [-a —a -a —-alias] 
 
     Automatically formats Python code to conform to the PEP 8 style guide.
 
@@ -327,28 +312,11 @@ Passing in ``--experimental`` enables the following functionality:
 
 $ autopep8 --experimental <filename>
 
-Disabling line-by-line
-----------------------
-
-It is possible to disable autopep8 untill it it turned back on again in the file, using ``autopep8: off`` and then renabling ``autopep8: on``. 
-
-.. code-block:: python
-
-    # autopep8: off
-        [
-            [23, 23, 13, 43],
-            [32, 34, 34, 34],
-            [56, 34, 34, 11],
-            [10, 10, 10, 10],
-        ]
-    # autopep8: on
-         
-``fmt: off`` and ``fmt: on`` are also valid.
 
 Use as a module
 ===============
 
-The simplest way of using autopep8 as a module is via the ``fix_code()``
+The simplest way of using autopyre as a module is via the ``fix_code()``
 function:
 
     >>> import autopep8
@@ -370,17 +338,38 @@ Customize
 =========
 
 
+License
+=======
+
+MIT 라이선스를 준수하며 LICENSE_ 에서 자세한 정보를 확인할 수 있습니다. 
+
+.. _LICENSE: https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08/blob/main/LICENSE
+
+
+contacts
+========
+
+- 김위성 `github <https://github.com/kimwiseong>`_ – 2019112083@dgu.ac.kr
+- 김태욱 `github <https://github.com/Taew00k>`_ – davis0625@dgu.ac.kr
+- 이선호 `github <https://github.com/prefer52>`_ – 2019111998@dgu.ac.kr
+- 조원준 `github <https://github.com/jun6292>`_ – c68254@dgu.ac.kr
+- 차재식 `github <https://github.com/Chajaesik01>`_ – 2019112003@dgu.ac.kr
+- 하지은 `github <https://github.com/HAJIEUN02>`_ – 2021111937@dgu.ac.kr
+
+
 Links
 =====
 
 * PyPI_
+* PEP8_
 * autopep8_
 * autopyre_
-* PEP8_
+* pyrestlye_
+* pycodestyle_
 
 .. _PyPI: https://pypi.org/project/autopep8/
 .. _autopep8: https://github.com/hhatto/autopep8
 .. _autopyre: https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08
 .. _pycodestyle: https://github.com/PyCQA/pycodestyle
-.. _pyrestyle: https://github.com/PyCQA/pycodestyle
+.. _pyrestyle: https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08/blob/main/pyrestyle.py
 .. _PEP8: https://www.python.org/dev/peps/pep-0008/

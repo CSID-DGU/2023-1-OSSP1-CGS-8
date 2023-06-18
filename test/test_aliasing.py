@@ -9,12 +9,15 @@ class ex_two:
         
     def FunctionAliasing(self):
         print('ex2의 함수입니다.')
+        return None
 
 def ExOne():
     print('ex1입니다.')
+    return None
 
 def ExFour():
-    print('ex1입니다.')
+    for _ in range(10):
+        print('ex1입니다.')
 
 class ExThree:
     def ex_func2(self):
@@ -27,16 +30,17 @@ class ExThree:
 # Aliasing 코드 삽입 결과
 """
 class ExTwo:
-    def ex_func():
-        print('ex2의 함수입니다.')
+    def ex_func(self):
+        print("ex2의 함수입니다.")
 
     ExFunc = ex_func
 
-    def aliasing():
-        print('ex2의 함수입니다.')
+    def aliasing(self):
+        print("ex2의 함수입니다.")
 
-    def function_aliasing():
-        print('ex2의 함수입니다.')
+    def function_aliasing(self):
+        print("ex2의 함수입니다.")
+        return None
 
     FunctionAliasing = function_aliasing
 
@@ -45,16 +49,16 @@ ex_two = ExTwo
 
 
 def ex_one():
-
-    print('ex1입니다.')
+    print("ex1입니다.")
+    return None
 
 
 ExOne = ex_one
 
 
 def ex_four():
-
-    print('ex1입니다.')
+    for _ in range(10):
+        print("ex1입니다.")
 
 
 ExFour = ex_four
@@ -63,9 +67,4 @@ ExFour = ex_four
 class ExThree:
     def ex_func2(self):
         return None
-    
-ex_two.ExFunc()
-ex_two.FunctionAliasing()
-ExFour()
-ExOne()
 """
