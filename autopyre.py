@@ -1066,7 +1066,7 @@ class FixPEP8(object):
         # 변환 해주는 작업
         double_quote = {
             ord('"') : "'",
-            ord("'") : '\\''
+            ord("'") : "\\'"
         }
         single_quote = {
             ord("'") : '"',
