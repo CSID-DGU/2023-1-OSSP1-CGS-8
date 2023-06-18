@@ -277,7 +277,7 @@ Naming Convention
 
 Description::
     
-    - [-a -a -a]
+    * [-a -a -a]
     PEP8 스타일 가이드에서 권장하는 클래스와 함수의 작명 규칙을 
     따르지 않을 경우 권장하는 스타일에 맞게 수정합니다.
 
@@ -285,7 +285,7 @@ Description::
     $ autopyre -a -a -a input.py
 
 
-    - [--alias]
+    * [--alias]
     Aliasing 코드 삽입
 
     예시
@@ -296,7 +296,7 @@ Customize
 
 Description::
 
-    - [--customize]
+    * [--customize]
     custom.txt 파일을 수정해서 적용할 수 있습니다.
 
     예시
