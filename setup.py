@@ -28,6 +28,7 @@ with io.open('README.md') as readme:
         description='A tool that automatically formats Python code to conform '
                     'to the PEP 8 style guide and This project based on autopep8',
         long_description=readme.read(),
+        long_description_content_type = "text/markdown",
         license='Expat License',
         author='Hideo Hattori, 2023-1-OPPS1-CGS-08',
         author_email='kys00919@gmail.com',
