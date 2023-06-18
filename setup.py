@@ -9,9 +9,8 @@ import io
 from setuptools import setup
 
 # read the contents of your README file
-from pathlib import Path
-this_directory = Path(__file__).parent
-long_description = (this_directory / "README.md").read_text()
+with open("README.md", "r") as fh:
+    long_description = fh.read()
 
 INSTALL_REQUIRES = (
     ['tomli; python_version < "3.11"']
@@ -33,7 +32,7 @@ with io.open('README.md') as readme:
                     'to the PEP 8 style guide and This project based on autopep8',
         long_description=long_description,
         long_description_content_type = "text/x-rst",
-        license='Expat License',
+        license='MIT',
         author='Hideo Hattori, 2023-1-OPPS1-CGS-08',
         author_email='kys00919@gmail.com',
         url='https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08',
@@ -59,5 +58,5 @@ with io.open('README.md') as readme:
         test_suite='test.test_autopyre',
         py_modules=['autopyre'],
         zip_safe=False,
-        entry_points={'console_scripts': ['autopyre = autopyre:main']},
+        entry_points={'console_scripts': ['autopyre = autopyre:main', 'pyrestyle = pyrestyle:main'],},
     )
