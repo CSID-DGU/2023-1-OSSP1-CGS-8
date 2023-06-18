@@ -1,12 +1,12 @@
 ========
-2023-1-OPPS1-CGS-08 autopyre
+autopyre
 ========
 
 2023년 1학기 공개SW프로젝트01 8조 컴공쏘년단
 ==========================================
 
-``autopep8``과 ``pycodestyle``을 따르는 CODE STYLE FORMATTER로,
-파이썬 코드 스타일 가이드 `PEP8`_에 기반해 코드 스타일의 일관성을 유지하고
+autopep8_ 과 pycodestyle_ 을 따르는 Python Code Style Formatter로,
+파이썬 코드 스타일 가이드 PEP8_ 에 기반해 코드 스타일의 일관성을 유지하고
 커스터마이징 기능을 추가해 유연성을 강화했습니다. 또한 PEP8에서 언급하는 작명 컨벤션을 추가 구현하였습니다.
 
 
@@ -56,7 +56,7 @@
 
 MIT 라이선스를 준수하며 ``LICENSE``에서 자세한 정보를 확인할 수 있습니다.
 
-.. _PEP8: https://www.python.org/dev/peps/pep-0008/
+
 
 
 
@@ -96,7 +96,7 @@ autopep8 requires pycodestyle_.
 .. _pycodestyle: https://github.com/PyCQA/pycodestyle
 
 
-Usage
+사용법
 =====
 
 To modify a file in place (with aggressive level 2)::
@@ -457,9 +457,12 @@ Links
 =====
 
 * PyPI_
-* GitHub_
+* autopep8_
 * autopyre_
+* PEP8_
 
 .. _PyPI: https://pypi.org/project/autopep8/
-.. _GitHub: https://github.com/hhatto/autopep8
+.. _autopep8: https://github.com/hhatto/autopep8
 .. _autopyre: https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08
+.. _pycodestyle: https://github.com/PyCQA/pycodestyle
+.. _PEP8: https://www.python.org/dev/peps/pep-0008/
