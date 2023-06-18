@@ -275,29 +275,31 @@ autopyre fixes the following issues_ reported by pyrestyle_::
 Naming Convention
 =================
 
-description::
-    PEP8 스타일 가이드에서 권장하는 클래스와 함수의 작명 규칙을 
-    따르지 않을 경우 권장하는 스타일에 맞게 수정
+Description::
     
-    aggressive level 3 옵션을 적용
+    - [-a -a -a]
+    PEP8 스타일 가이드에서 권장하는 클래스와 함수의 작명 규칙을 
+    따르지 않을 경우 권장하는 스타일에 맞게 수정합니다.
 
-    - 사용예시
-        $ autopyre -a -a -a input.py
+    예시
+    $ autopyre -a -a -a input.py
 
-    * Alias [--alias]
-    Aliasing 코드를 삽입
 
-    - 사용예시
-        $ autopyre -a -a -a --alias 파일명.py
+    - [--alias]
+    Aliasing 코드 삽입
+
+    예시
+    $ autopyre -a -a -a --alias input.py
 
 Customize
 =========
 
-description::
-    [--customize]
-    custom.txt 파일을 수정해서 적용할 수 있다.
+Description::
 
-    - 사용예시
+    - [--customize]
+    custom.txt 파일을 수정해서 적용할 수 있습니다.
+
+    예시
     autopyre --customize input.py
 
 
@@ -307,7 +309,7 @@ License
 MIT 라이선스를 준수하며 LICENSE_ 에서 자세한 정보를 확인할 수 있습니다. 
 
 
-contacts
+Contacts
 ========
 
 - 김위성 `github <https://github.com/kimwiseong>`_ – 2019112083@dgu.ac.kr
