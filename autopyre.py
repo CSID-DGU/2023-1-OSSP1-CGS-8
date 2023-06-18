@@ -93,7 +93,7 @@ import libcst as cst  # pip install libcst
 import string
 from termcolor import colored  # pip install termcolor
 
-__version__ = '0.0.1'
+__version__ = '0.0.17'
 
 
 CR = '\r'
@@ -927,7 +927,7 @@ class FixPEP8(object):
             # 들여쓰기 수준 맞추기
             indent_word = _get_indentation(self.source[line_index])
             comment = indent_word + comment
-            self.source[line_index] = comment + '\n' + self.source[line_index] + '\n'  
+            self.source[line_index] = comment + '\n' + self.source[line_index] + '\n'    
 
     def fix_e271(self, result):
         """Fix extraneous whitespace around keywords."""
@@ -1078,6 +1078,7 @@ class FixPEP8(object):
         # 라인 업데이트
         if check == False:
             self.source[line_index] = target.translate(double_quote)   
+                     
         else:
             self.source[line_index] = target.translate(single_quote)
 
@@ -1892,10 +1893,12 @@ def extract_function_name(code):
 
 
 # 추가한 부분 - 김위성 - 프로젝트의 경로
-def get_project_path():
-    script_path = os.path.abspath(__file__)
-    project_path = os.path.dirname(os.path.dirname(script_path))
+def get_project_path(filename):
+    
+    absolute_path = os.path.abspath(filename)
+    project_path = os.path.dirname(absolute_path)
     return project_path
+
 
 
 # 추가한 부분 - 김위성 - import 하고 있는 파일과 해당 파일의 모든 식별자와 참조되는 식별자
@@ -1925,10 +1928,12 @@ def find_importing_files(project_path, target_file):
     
     for root, dirs, files in os.walk(project_path):
         for file_name in files:
+            
             file_path = os.path.join(root, file_name)
             if file_name.endswith('.py') and file_path != target_file_path:
+                
                 # iuput 파일이 import되고 있는 경우
-                if is_file_imported(file_path, target_file_name): 
+                if is_file_imported(file_path, target_file_name, project_path): 
                     importing_files.add(file_path)
     
     # iuput 파일이 import하는 파일(라이브러리)의 경우
@@ -1941,11 +1946,11 @@ def find_importing_files(project_path, target_file):
 # 보안 적용 - 
 # 적절한 자원 반환 - with문 내의 코드에 예외가 발생하더라도 항상 파일 닫기가 보장 
 # 예외 처리 - try-except : 사용자가 syntax 에러가 있는 소스 코드에 대해 작명 컨벤션을 적용할 경우
-def is_file_imported(file_path, target_file):
+def is_file_imported(file_path, target_file, project_path):
     with open(file_path, 'r', errors='ignore') as file:
         source_code = file.read()
-    
     tree = None
+    
     try:
         tree = ast.parse(source_code)
     except SyntaxError:
@@ -1953,6 +1958,7 @@ def is_file_imported(file_path, target_file):
     
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
+            
             for alias in node.names:
                 imported_module = alias.name
                 if target_file == imported_module or '.' + target_file in imported_module:
@@ -1961,6 +1967,31 @@ def is_file_imported(file_path, target_file):
             if node.module == target_file or '.' + target_file in node.module:
                 return True
 
+    
+    
+    
+    # import_paths = []
+    # library_paths = []
+    
+    # try:
+    #     tree = ast.parse(source_code)
+    # except SyntaxError:
+    #     return False
+    
+    # for node in ast.walk(tree):
+    #     if isinstance(node, ast.Import):
+    #         for alias in node.names:
+    #             import_paths.append(alias.name)
+
+    #     elif isinstance(node, ast.ImportFrom):
+    #         module_name = node.module if node.module else ''
+    #         import_paths.append(module_name)
+    
+    
+            
+    # if target_file in import_paths: 
+    #     return True
+    
     return False
 
 
@@ -2039,7 +2070,6 @@ def get_import_paths(project_path, file_path):
         elif isinstance(node, ast.ImportFrom):
             module_name = node.module if node.module else ''
             import_paths.append(module_name)
-
                 
     for import_path in import_paths:
         if "." in import_path:
@@ -2051,7 +2081,7 @@ def get_import_paths(project_path, file_path):
         if library_path.startswith(project_path):
 
             library_paths.append(library_path)
-        
+
     return library_paths
 
 
@@ -2061,7 +2091,7 @@ def get_file_path(project_path, file_name):
         for file in files:
             if file == file_name:
                 return os.path.join(root, file)
-
+    
     return None
 
 
@@ -2659,8 +2689,6 @@ def _priority_key(pep8_result):
 
     """
     priority = [
-        # 우선 순위에 인라인 주석을 추가해 이름 변경으로 인한 행 위치 변경 방지
-        # 'e267',
         # 먼저 바꿔줘야 import로 인한 라인 브레이킹 문제가 없어진다.
         # 추가한 부분 - 김위성 - 클래스 이름
         'w701',
@@ -2682,6 +2710,7 @@ def _priority_key(pep8_result):
         # We need to shorten lines last since the logical fixer can get in a
         # loop, which causes us to exit early.
         'e501',
+        # 인라인 주석을 추가해 이름 변경으로 인한 행 위치 변경 방지
         'e267'
     ]
     key = pep8_result['id'].lower()
@@ -4421,7 +4450,7 @@ def fix_file(filename, options=None, output=None, apply_config=False):
             
         global all_origin_identifiers 
         global all_origin_referenced
-        project_path = get_project_path()
+        project_path = get_project_path(filename)
         all_origin_identifiers, all_origin_referenced = find_all_identifiers(project_path, filename)
         
         
