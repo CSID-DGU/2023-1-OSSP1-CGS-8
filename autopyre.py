@@ -910,7 +910,10 @@ class FixPEP8(object):
     def fix_e267(self, result):
         line_index = result['line'] - 1
         target = self.source[line_index]
-        offset = result['column']- 1
+        if self.options.aggressive >= 3:
+            offset = target.index('#')
+        else: 
+            offset = result['column']- 1
         comment = target[offset:].rstrip()
         self.source[line_index] = target[:offset].rstrip()
         
@@ -924,7 +927,7 @@ class FixPEP8(object):
             # 들여쓰기 수준 맞추기
             indent_word = _get_indentation(self.source[line_index])
             comment = indent_word + comment
-            self.source[line_index] = comment + '\n' + self.source[line_index] + '\n'    
+            self.source[line_index] = comment + '\n' + self.source[line_index] + '\n'  
 
     def fix_e271(self, result):
         """Fix extraneous whitespace around keywords."""
@@ -2658,7 +2661,7 @@ def _priority_key(pep8_result):
     """
     priority = [
         # 우선 순위에 인라인 주석을 추가해 이름 변경으로 인한 행 위치 변경 방지
-        'e267',
+        # 'e267',
         # 먼저 바꿔줘야 import로 인한 라인 브레이킹 문제가 없어진다.
         # 추가한 부분 - 김위성 - 클래스 이름
         'w701',
@@ -2680,6 +2683,7 @@ def _priority_key(pep8_result):
         # We need to shorten lines last since the logical fixer can get in a
         # loop, which causes us to exit early.
         'e501',
+        'e267'
     ]
     key = pep8_result['id'].lower()
     try:
