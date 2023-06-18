@@ -1062,18 +1062,20 @@ class FixPEP8(object):
                 break
             else:
                 i+=1
+
         # 변환 해주는 작업
         double_quote = {
             ord('"') : "'",
-            ord("'") : '\"'
+            ord("'") : '\\''
         }
         single_quote = {
             ord("'") : '"',
-            ord('"') : "\'"
+            ord('"') : '\\"'
         }
         # 라인 업데이트
         if check == False:
-            self.source[line_index] = target.translate(double_quote)            
+            self.source[line_index] = target.translate(double_quote)   
+                     
         else:
             self.source[line_index] = target.translate(single_quote)
 
