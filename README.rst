@@ -2,6 +2,14 @@
 autopyre
 ========
 
+.. image:: https://img.shields.io/pypi/v/pyrestyle.svg
+    :target: https://pypi.org/project/pyrestyle/
+    
+
+.. image:: https://img.shields.io/pypi/v/autopyre.svg
+    :target: https://pypi.org/project/autopyre/
+    
+
 autopep8_ 과 pycodestyle_ 을 개선한 ``Python Code Style Formatter``
 
 * autopyre는 python 코드를 자동으로 PEP8_ 스타일 가이드에 맞게 포매팅하는 도구입니다.
@@ -25,7 +33,7 @@ Installation
 Requirements
 ============
 
-autopyre requires pyrestyle_.
+autopyre requires pyrestyle_
 
 .. code-block:: shell
 
@@ -36,40 +44,16 @@ autopyre requires pyrestyle_.
 Usage
 =====
 
-.. code-block:: shell
+파일 변경 내용을 콘솔로 출력 (default)::
 
-   $ autopep8 --in-place --aggressive --aggressive <filename>
+    $ autopyre -a -a -a <filename>
 
+파일 변경 내용을 파일에 덮어쓰기 (aggressive level 3)::
 
-Use as a module
-===============
-
-.. code-block:: python
-
-   >>> import autopep8
-   >>> autopep8.fix_code('print( 123 )\n',
-   ...                   options={'ignore': ['E']})
-   'print( 123 )\n'
+    $ autopyre --in-place -a -a -a <filename>
 
 
-.. image:: https://img.shields.io/pypi/v/autopep8.svg
-    :target: https://pypi.org/project/autopep8/
-    :alt: PyPI Version
-
-
-
-.. _PEP 8: https://www.python.org/dev/peps/pep-0008/
-.. _issues: https://pycodestyle.readthedocs.org/en/latest/intro.html#error-codes
-
-
-
-
-
-To modify a file in place (with aggressive level 2)::
-
-    $ autopep8 --in-place --aggressive --aggressive <filename>
-
-Before running autopep8.
+autopyre 실행 전 코드 (코드의 의미 X, 포매팅에 집중)
 
 .. code-block:: python
 
@@ -81,79 +65,90 @@ Before running autopep8.
         some_variable={'long':'Long code lines should be wrapped within 79 characters.',
         'other':[math.pi, 100,200,300,9876543210,'This is a long string that goes on'],
         'more':{'inner':'This whole logical line should be wrapped.',some_tuple:[1,
-        20,300,40000,500000000,60000000000000000]}}
+        20,300,40000,5,6000000]}}
         return (some_tuple, some_variable)
-    def example2(): return {'has_key() is deprecated':True}.has_key({'f':2}.has_key(''));
-    class Example3(   object ):
+    def ExampleTwo(): # inline comment
+        return {'has_key() is deprecated':True}.has_key({'f':2}.has_key(''));
+    class example_three(   object ):    # inline comment2
         def __init__    ( self, bar ):
-         #Comments should have a space after the hash.
-         if bar : bar+=1;  bar=bar* bar   ; return bar
-         else:
-                        some_string = """
-                       Indentation in multiline strings should not be touched.
-    Only actual code should be reindented.
-    """
-                        return (sys.path, some_string)
+            #Comments should have a space after the hash.
+            if bar : bar+=1;  bar=bar* bar   ; return bar   # 인라인 주석
+            else:
+                    some_string = '''
+                    여러 줄 문자열 
+                    double quote 변환'''
+            return (sys.path, some_string)
 
-After running autopep8.
+autopyre 실행 후 코드
+
+.. code-block:: shell
+
+   $ autopyre -a -a -a test_all.py
+
 
 .. code-block:: python
 
     import math
     import sys
 
-
     def example1():
         # This is a long comment. This should be wrapped to fit within 72
         # characters.
-        some_tuple = (1, 2, 3, 'a')
+        some_tuple = (1, 2, 3, "a")
         some_variable = {
-            'long': 'Long code lines should be wrapped within 79 characters.',
-            'other': [
+            "long": "Long code lines should be wrapped within 79 characters.",
+            "other": [
                 math.pi,
                 100,
                 200,
                 300,
                 9876543210,
-                'This is a long string that goes on'],
-            'more': {
-                'inner': 'This whole logical line should be wrapped.',
+                "This is a long string that goes on"],
+            "more": {
+                "inner": "This whole logical line should be wrapped.",
                 some_tuple: [
                     1,
                     20,
                     300,
                     40000,
-                    500000000,
-                    60000000000000000]}}
+                    5,
+                    6000000]}}
         return (some_tuple, some_variable)
 
 
-    def example2(): return ('' in {'f': 2}) in {'has_key() is deprecated': True}
+    # inline comment
+    def example_two():
+        return {"has_key() is deprecated": True}.has_key({"f": 2}.has_key(""))
 
 
-    class Example3(object):
+    # inline comment2
+    class ExampleThree(object):
         def __init__(self, bar):
             # Comments should have a space after the hash.
             if bar:
                 bar += 1
                 bar = bar * bar
+                # 인라인 주석
                 return bar
             else:
                 some_string = """
-                       Indentation in multiline strings should not be touched.
-    Only actual code should be reindented.
-    """
-                return (sys.path, some_string)
+                    여러 줄 문자열
+                    double quote 변환"""
+            return (sys.path, some_string)
 
-options::
 
-    usage: autopyre [-h] [--version] [-v] [-d] [-i] [--global-config filename]
+Options::
+
+    usage: autopep8 [-h] [--version] [-v] [-d] [-i] [--global-config filename]
                     [--ignore-local-config] [-r] [-j n] [-p n] [-a]
                     [--experimental] [--exclude globs] [--list-fixes]
                     [--ignore errors] [--select errors] [--max-line-length n]
                     [--line-range line line] [--hang-closing] [--exit-code]
                     [files [files ...]]
-				    [--customize] [-a —a -a —-alias] 
+
+            * only autopyre
+				    [--customize] [—-alias] [-a -a -a]
+                    [--aggressive --aggressive --aggressive]
 
     Automatically formats Python code to conform to the PEP 8 style guide.
 
@@ -265,85 +260,51 @@ autopyre fixes the following issues_ reported by pyrestyle_::
     W504 - Fix line break after binary operator.
     W605 - Fix invalid escape sequence 'x'.
     W690 - Fix various deprecated code (via lib2to3).
-    W705 -
-    W706 -
-    W707 -
-    W708 -
-    w744 -
-    w745 -
 
-More advanced usage
-===================
+    * only autopyre
 
-By default autopep8 only makes whitespace changes. Thus, by default, it does
-not fix ``E711`` and ``E712``. (Changing ``x == None`` to ``x is None`` may
-change the meaning of the program if ``x`` has its ``__eq__`` method
-overridden.) Nor does it correct deprecated code ``W6``. To enable these
-more aggressive fixes, use the ``--aggressive`` option::
+    E267 - Remove inline comment and add block comment
+    W705 - Modify class name to capwords case
+    W706 - Modify class name to capwords case and add aliasing code
+    W707 - Modify function name to snake case
+    W708 - Modify function name to snake case and add aliasing code
+    w744 - Modify single quote to double quote
+    w745 - Modify triple single quote to triple double quote
 
-    $ autopep8 --aggressive <filename>
-
-Use multiple ``--aggressive`` to increase the aggressiveness level. For
-example, ``E712`` requires aggressiveness level 2 (since ``x == True`` could be
-changed to either ``x`` or ``x is True``, but autopep8 chooses the former).
-
-``--aggressive`` will also shorten lines more aggressively. It will also remove
-trailing whitespace more aggressively. (Usually, we don't touch trailing
-whitespace in docstrings and other multiline strings. And to do even more
-aggressive changes to docstrings, use docformatter_.)
-
-.. _docformatter: https://github.com/myint/docformatter
-
-To enable only a subset of the fixes, use the ``--select`` option. For example,
-to fix various types of indentation issues::
-
-    $ autopep8 --select=E1,W1 <filename>
-
-If the file being fixed is large, you may want to enable verbose progress
-messages::
-
-    $ autopep8 -v <filename>
-
-Passing in ``--experimental`` enables the following functionality:
-
-- Shortens code lines by taking its length into account
-
-::
-
-$ autopep8 --experimental <filename>
-
-
-Use as a module
-===============
-
-The simplest way of using autopyre as a module is via the ``fix_code()``
-function:
-
-    >>> import autopep8
-    >>> autopep8.fix_code('x=       123\n')
-    'x = 123\n'
-
-Or with options:
-
-    >>> import autopep8
-    >>> autopep8.fix_code('print( 123 )\n',
-    ...                   options={'ignore': ['E']})
-    'print( 123 )\n'
 
 Naming Convention
 =================
 
+description::
+    PEP8 스타일 가이드에서 권장하는 클래스와 함수의 작명 규칙을 
+    따르지 않을 경우 권장하는 스타일에 맞게 수정
+    
+    aggressive level 3 옵션을 적용
+
+    - 사용예시
+        $ autopyre -a -a -a input.py
+
+    * Alias [--alias]
+    Aliasing 코드를 삽입
+
+    - 사용예시
+        $ autopyre -a -a -a --alias 파일명.py
 
 Customize
 =========
+
+description::
+    [--customize]
+    custom.txt 파일을 수정해서 적용할 수 있다.
+
+    - 사용예시
+    autopyre --customize input.py
 
 
 License
 =======
 
 MIT 라이선스를 준수하며 LICENSE_ 에서 자세한 정보를 확인할 수 있습니다. 
-
-.. _LICENSE: https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08/blob/main/LICENSE
 
 
 contacts
@@ -373,3 +334,5 @@ Links
 .. _pycodestyle: https://github.com/PyCQA/pycodestyle
 .. _pyrestyle: https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08/blob/main/pyrestyle.py
 .. _PEP8: https://www.python.org/dev/peps/pep-0008/
+.. _LICENSE: https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08/blob/main/LICENSE
+.. _issues: https://pycodestyle.readthedocs.org/en/latest/intro.html#error-codes

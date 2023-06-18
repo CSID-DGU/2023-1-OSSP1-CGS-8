@@ -1078,7 +1078,6 @@ class FixPEP8(object):
         # 라인 업데이트
         if check == False:
             self.source[line_index] = target.translate(double_quote)   
-                     
         else:
             self.source[line_index] = target.translate(single_quote)
 
