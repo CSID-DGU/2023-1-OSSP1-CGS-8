@@ -1,13 +1,72 @@
 ========
-autopep8
+2023-1-OPPS1-CGS-08 autopyre
 ========
+
+2023년 1학기 공개SW프로젝트01 8조 컴공쏘년단
+==========================================
+
+``autopep8``과 ``pycodestyle``을 따르는 CODE STYLE FORMATTER로,
+파이썬 코드 스타일 가이드 `PEP8`_에 기반해 코드 스타일의 일관성을 유지하고
+커스터마이징 기능을 추가해 유연성을 강화했습니다. 또한 PEP8에서 언급하는 작명 컨벤션을 추가 구현하였습니다.
+
+
+사용 예제
+----------
+
+스크린 샷과 코드 예제를 통해 사용 방법을 자세히 설명합니다.
+
+설치 방법
+~~~~~~~~~
+
+.. code-block:: shell
+
+   $ pip install --upgrade autopep8
+
+사용 방법
+~~~~~~~~~
+
+.. code-block:: shell
+
+   $ autopep8 --in-place --aggressive --aggressive <filename>
+
+모듈로 사용
+~~~~~~~~~~
+
+.. code-block:: python
+
+   >>> import autopep8
+   >>> autopep8.fix_code('print( 123 )\n',
+   ...                   options={'ignore': ['E']})
+   'print( 123 )\n'
+
+
+정보
+----
+
+- 김위성 `@github <https://github.com/kimwiseong>`_ – 2019112083@dgu.ac.kr
+- 김태욱 `@github <https://github.com/Taew00k>`_ – davis0625@dgu.ac.kr
+- 이선호 `@github <https://github.com/prefer52>`_ – 2019111998@dgu.ac.kr
+- 조원준 `@github <https://github.com/jun6292>`_ – c68254@dgu.ac.kr
+- 차재식 `@github <https://github.com/Chajaesik01>`_ – 2019112003@dgu.ac.kr
+- 하지은 `@github <https://github.com/HAJIEUN02>`_ – 2021111937@dgu.ac.kr
+
+
+라이선스
+--------
+
+MIT 라이선스를 준수하며 ``LICENSE``에서 자세한 정보를 확인할 수 있습니다.
+
+.. _PEP8: https://www.python.org/dev/peps/pep-0008/
+
+
+
 
 .. image:: https://img.shields.io/pypi/v/autopep8.svg
     :target: https://pypi.org/project/autopep8/
     :alt: PyPI Version
 
 autopyre automatically formats Python code to conform to the `PEP 8`_ style
-guide. It uses the pyrestyle_ utility to determine what parts of the code
+guide. It uses the pycodetyle_ utility to determine what parts of the code
 needs to be formatted. autopyre is capable of fixing most of the formatting
 issues_ that can be reported by pycodestyle.
 
@@ -376,23 +435,6 @@ configuration file example::
     recursive = true
     aggressive = 3
 
-Usage with pre-commit
-=====================
-
-autopep8 can be used as a hook for pre-commit_.
-
-To add autopep8 as a plugin, add this repo definition to your configuration:
-
-.. code-block:: yaml
-
-    repos:
-    -   repo: https://github.com/hhatto/autopep8
-        rev: ...  # select the tag or revision you want, or run `pre-commit autoupdate`
-        hooks:
-        -   id: autopep8
-
-.. _`pre-commit`: https://pre-commit.com
-
 
 Testing
 =======
@@ -411,30 +453,13 @@ code fixes. It can check that the bytecode remains identical.
 released packages on PyPI.
 
 
-Troubleshooting
-===============
-
-``pkg_resources.DistributionNotFound``
---------------------------------------
-
-If you are using an ancient version of ``setuptools``, you might encounter
-``pkg_resources.DistributionNotFound`` when trying to run ``autopep8``. Try
-upgrading ``setuptools`` to workaround this ``setuptools`` problem::
-
-    $ pip install --upgrade setuptools
-
-Use ``sudo`` if you are installing to the system.
-
-
 Links
 =====
 
 * PyPI_
 * GitHub_
-* `Travis CI`_
-* Coveralls_
+* autopyre_
 
 .. _PyPI: https://pypi.org/project/autopep8/
 .. _GitHub: https://github.com/hhatto/autopep8
-.. _`Travis CI`: https://travis-ci.org/hhatto/autopep8
-.. _`Coveralls`: https://coveralls.io/r/hhatto/autopep8
+.. _autopyre: https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08
