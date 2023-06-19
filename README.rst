@@ -230,14 +230,14 @@ Links
 * PEP8_
 * autopep8_
 * autopyre_
-* pyrestlye_
+* pyrestyle_
 * pycodestyle_
 
 .. _PyPI: https://pypi.org/project/autopep8/
 .. _autopep8: https://github.com/hhatto/autopep8
 .. _autopyre: https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08
 .. _pycodestyle: https://github.com/PyCQA/pycodestyle
-.. _pyrestyle: https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08/blob/main/pyrestyle.py
+.. _pyrestyle: https://github.com/CSID-DGU/2023-1-OSSP1-CGS-8/blob/main/pyrestyle.py
 .. _PEP8: https://www.python.org/dev/peps/pep-0008/
 .. _LICENSE: https://github.com/CSID-DGU/2023-1-OPPS1-CGS-08/blob/main/LICENSE
 .. _issues: https://pycodestyle.readthedocs.org/en/latest/intro.html#error-codes
