@@ -165,6 +165,7 @@ Features
 ========
 
 autopyre fixes the following issues_ reported by pyrestyle_::
+    
     E267 - Remove inline comment and add block comment
     W705 - Modify class name to capwords case
     W706 - Modify class name to capwords case and add aliasing code
