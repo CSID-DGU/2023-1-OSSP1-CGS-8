@@ -53,6 +53,9 @@ Usage
     $ autopyre --in-place -a -a -a <filename>
 
 
+![공소시연영상](https://github.com/CSID-DGU/2023-1-OSSP1-CGS-8/assets/75564221/57d971f8-5e06-43b8-898b-a0c14762efe1)
+
+
 autopyre 실행 전 코드 (코드의 의미 X, 포매팅에 집중)
 
 .. code-block:: python
@@ -165,7 +168,7 @@ Features
 ========
 
 autopyre fixes the following issues_ reported by pyrestyle_::
-    
+
     E267 - Remove inline comment and add block comment
     W705 - Modify class name to capwords case
     W706 - Modify class name to capwords case and add aliasing code
