@@ -44,6 +44,9 @@ autopyre requires pyrestyle_
 Usage
 =====
 
+.. image:: https://github.com/CSID-DGU/2023-1-OSSP1-CGS-8/assets/75564221/57d971f8-5e06-43b8-898b-a0c14762efe1.gif
+   :alt: autopyre 사용법
+
 파일 변경 내용을 콘솔로 출력 (default)::
 
     $ autopyre -a -a -a <filename>
@@ -52,8 +55,6 @@ Usage
 
     $ autopyre --in-place -a -a -a <filename>
 
-
-![공소시연영상](https://github.com/CSID-DGU/2023-1-OSSP1-CGS-8/assets/75564221/57d971f8-5e06-43b8-898b-a0c14762efe1)
 
 
 autopyre 실행 전 코드 (코드의 의미 X, 포매팅에 집중)
